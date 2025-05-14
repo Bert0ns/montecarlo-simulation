@@ -25,7 +25,7 @@ export function MonteCarloExplanationSection() {
                 </div>
 
                 <p>
-                    Therefore, if we generate N random points and count how many fall inside the circle (let's call this count M),
+                    Therefore, if we generate N random points and count how many fall inside the circle (let&#39;s call this count M),
                     we can approximate π as:
                 </p>
 
@@ -40,7 +40,7 @@ export function MonteCarloExplanationSection() {
                 <div className="my-6 p-4 bg-gray-50 rounded-lg">
                     <h4 className="text-lg font-medium mb-2">Mathematical Insight</h4>
                     <p>
-                        The Monte Carlo method works because we're essentially performing numerical integration to calculate the
+                        The Monte Carlo method works because we&#39;re essentially performing numerical integration to calculate the
                         area of a unit circle:
                     </p>
                     <div className="my-4 flex justify-center">
