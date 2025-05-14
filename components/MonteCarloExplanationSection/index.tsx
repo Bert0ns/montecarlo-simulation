@@ -1,3 +1,5 @@
+import MathFormula from "@/components/MathFormula";
+
 export function MonteCarloExplanationSection() {
     return (
         <section className="mb-12">
@@ -17,7 +19,9 @@ export function MonteCarloExplanationSection() {
                 <p>If we randomly place points inside the square, the probability of a point falling inside the circle is:</p>
 
                 <div className="my-4 text-center">
-                    <p className="text-lg">P(inside circle) = Area of circle / Area of square = π / 4</p>
+                    <MathFormula>
+                        {`$P(\\text{inside circle}) = \\frac{\\text{Area of circle}}{\\text{Area of square}} = \\frac{\\pi r^2}{(2r)^2} = \\frac{\\pi}{4}$`}
+                    </MathFormula>
                 </div>
 
                 <p>
@@ -25,8 +29,10 @@ export function MonteCarloExplanationSection() {
                     we can approximate π as:
                 </p>
 
-                <div className="my-4 text-center">
-                    <p className="text-lg">π ≈ 4 × (M / N)</p>
+                <div className="my-4 text-center text-lg">
+                    <MathFormula>
+                        {`$\\pi ≈ 4* \\frac{\\text{M}}{\\text{N}}$`}
+                    </MathFormula>
                 </div>
 
                 <p>The more points we generate, the more accurate our approximation becomes.</p>

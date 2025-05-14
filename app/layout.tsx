@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import 'katex/dist/katex.css' // `rehype-katex` does not import the CSS for you
 import React from "react";
 import SiteFooter from "@/components/SiteFooter";
 import {SiteHeader} from "@/components/SiteHeader";
