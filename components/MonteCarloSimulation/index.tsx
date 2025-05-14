@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useRef, useState } from "react"
+import React, {useCallback, useEffect, useRef, useState} from "react"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
 import { RefreshCw, Pause, Play } from "lucide-react"
@@ -10,68 +10,77 @@ interface Point {
     y: number
     isInside: boolean
 }
+interface Circle {
+    x: number
+    y: number
+    radius: number
+}
 
 const MonteCarloSimulation: React.FC = ({}) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null)
-    const [points, setPoints] = useState<Point[]>([])
-    const [piApproximation, setPiApproximation] = useState<number>(0)
-    const [isRunning, setIsRunning] = useState<boolean>(false)
-    const [speed, setSpeed] = useState<number>(10)
-    const animationRef = useRef<number | null>(null)
-    const lastTimeRef = useRef<number>(0)
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [points, setPoints] = useState<Point[]>([]);
+    const [piApproximation, setPiApproximation] = useState<number>(0);
+    const [isRunning, setIsRunning] = useState<boolean>(false);
+    const [speed, setSpeed] = useState<number>(10);
+    const animationRef = useRef<number | null>(null);
+    const lastTimeRef = useRef<number>(0);
 
-    const canvasSize = 400
-    const radius = canvasSize / 2
+    const canvasSize = 400;
+    const circle: Circle = {
+        x: canvasSize / 2,
+        y: canvasSize / 2,
+        radius: canvasSize / 2
+    }
 
     const resetSimulation = () => {
-        setPoints([])
-        setPiApproximation(0)
+        setPoints([]);
+        setPiApproximation(0);
         if (animationRef.current) {
-            cancelAnimationFrame(animationRef.current)
-            animationRef.current = null
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
         }
-        setIsRunning(false)
+        setIsRunning(false);
     }
 
     const toggleSimulation = () => {
-        setIsRunning((prev) => !prev)
+        setIsRunning((prev) => !prev);
     }
 
-    const addPoint = () => {
-        // Generate random point in square with coordinates from -1 to 1
-        const x = Math.random() * 2 - 1
-        const y = Math.random() * 2 - 1
+    const animate = useCallback((timestamp: number) => {
+        const addPoint = () => {
+            const x: number = Math.random() * 2 - 1
+            const y: number = Math.random() * 2 - 1
+            const isInside: boolean = (x * x + y * y) < 1
 
-        // Check if point is inside circle (x^2 + y^2 <= 1)
-        const isInside = x * x + y * y <= 1
+            setPoints((prevPoints: Point[]) => {
+                // Convert from [-1,1] coordinates to canvas coordinates
+                const canvasX = (x + 1) * circle.radius;
+                const canvasY = (y + 1) * circle.radius;
 
-        setPoints((prevPoints) => [...prevPoints, { x, y, isInside }])
+                const newPoints: Point[] = [...prevPoints, {x: canvasX, y: canvasY, isInside}];
 
-        // Update pi approximation
-        const newPoints = [...points, { x, y, isInside }]
-        const pointsInside = newPoints.filter((p) => p.isInside).length
-        const totalPoints = newPoints.length
-
-        if (totalPoints > 0) {
-            setPiApproximation(4 * (pointsInside / totalPoints))
+                const pointsInside: number = newPoints.filter((p) => p.isInside).length;
+                if (newPoints.length > 0) {
+                    setPiApproximation(4 * (pointsInside / newPoints.length));
+                }
+                return newPoints;
+            })
         }
-    }
+        
+        if (!lastTimeRef.current) lastTimeRef.current = timestamp;
 
-    const animate = (timestamp: number) => {
-        if (!lastTimeRef.current) lastTimeRef.current = timestamp
-
-        const elapsed = timestamp - lastTimeRef.current
-        const pointsToAdd = Math.floor((elapsed * speed) / 1000)
+        const elapsed: number = timestamp - lastTimeRef.current;
+        const pointsToAdd: number = Math.floor((elapsed * speed) / 1000);
 
         if (pointsToAdd > 0) {
             lastTimeRef.current = timestamp
             for (let i = 0; i < pointsToAdd; i++) {
-                addPoint()
+                addPoint();
             }
         }
 
         animationRef.current = requestAnimationFrame(animate)
-    }
+    }, [circle.radius, speed])
 
     useEffect(() => {
         if (isRunning) {
@@ -87,41 +96,36 @@ const MonteCarloSimulation: React.FC = ({}) => {
                 cancelAnimationFrame(animationRef.current)
             }
         }
-    }, [isRunning, speed])
+    }, [animate, isRunning, speed])
 
     useEffect(() => {
-        const canvas = canvasRef.current
-        if (!canvas) return
+        const canvas: HTMLCanvasElement | null = canvasRef.current;
+        if (!canvas) return;
+        const ctx: CanvasRenderingContext2D | null = canvas.getContext("2d");
+        if (!ctx) return;
 
-        const ctx = canvas.getContext("2d")
-        if (!ctx) return
-
-        // Clear canvas
         ctx.clearRect(0, 0, canvasSize, canvasSize)
 
         // Draw square
-        ctx.strokeStyle = "#e5e7eb"
-        ctx.lineWidth = 2
-        ctx.strokeRect(0, 0, canvasSize, canvasSize)
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(0, 0, canvasSize, canvasSize);
 
         // Draw circle
-        ctx.beginPath()
-        ctx.arc(radius, radius, radius, 0, 2 * Math.PI)
-        ctx.strokeStyle = "#d1d5db"
-        ctx.stroke()
+        ctx.beginPath();
+        ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = "#d1d5db";
+        ctx.stroke();
 
         // Draw points
-        points.forEach((point) => {
-            ctx.beginPath()
-            // Convert from [-1,1] coordinates to canvas coordinates
-            const canvasX = (point.x + 1) * radius
-            const canvasY = (point.y + 1) * radius
-
-            ctx.arc(canvasX, canvasY, 2, 0, 2 * Math.PI)
-            ctx.fillStyle = point.isInside ? "#3b82f6" : "#ef4444"
-            ctx.fill()
-        })
-    }, [points])
+        for (let i = 0; i < points.length; i++) {
+            const point = points[i];
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+            ctx.fillStyle = point.isInside ? "#3b82f6" : "#ef4444";
+            ctx.fill();
+        }
+    }, [circle.radius, circle.x, circle.y, points])
 
     return (
         <div className="bg-gray-50 p-6 rounded-lg shadow-sm">
@@ -173,7 +177,7 @@ const MonteCarloSimulation: React.FC = ({}) => {
                                 <Slider
                                     value={[speed]}
                                     min={1}
-                                    max={100}
+                                    max={2000}
                                     step={1}
                                     onValueChange={(value) => setSpeed(value[0])}
                                     className="flex-1"
@@ -185,19 +189,16 @@ const MonteCarloSimulation: React.FC = ({}) => {
 
                     <div className="flex gap-3 mt-4">
                         <Button variant="outline" className="flex-1" onClick={resetSimulation}>
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Reset
+                            <RefreshCw className="mr-2 h-4 w-4" /> Reset
                         </Button>
                         <Button className="flex-1" onClick={toggleSimulation}>
                             {isRunning ? (
                                 <>
-                                    <Pause className="mr-2 h-4 w-4" />
-                                    Pause
+                                    <Pause className="mr-2 h-4 w-4" /> Pause
                                 </>
                             ) : (
                                 <>
-                                    <Play className="mr-2 h-4 w-4" />
-                                    Start
+                                    <Play className="mr-2 h-4 w-4" /> Start
                                 </>
                             )}
                         </Button>
