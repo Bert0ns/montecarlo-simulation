@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import React from "react";
 import SiteFooter from "@/components/SiteFooter";
 import {SiteHeader} from "@/components/SiteHeader";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import {Merriweather} from "next/font/google";
+import {NextFontWithVariable} from "next/dist/compiled/@next/font";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const merriweather: NextFontWithVariable = Merriweather({
+    subsets: ['latin'],
+    weight: ['300', '400', '700'],
+    variable: '--font-merriweather',
+    display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -28,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${merriweather.variable} antialiased font-serif`}
       >
       <SiteHeader />
         {children}

@@ -4,7 +4,7 @@ export function SiteHeader() {
     return (
         <header className="border-b border-gray-200">
             <div className="container mx-auto px-4 py-6 flex justify-between items-center max-w-4xl">
-                <h1 className="text-2xl font-semibold tracking-tight">Monte Carlo π</h1>
+                <h1 className="text-2xl font-semibold tracking-tight">Monte Carlo Simulation</h1>
                 <nav>
                     <a
                         href="https://github.com"
