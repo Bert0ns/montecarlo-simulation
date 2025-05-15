@@ -19,7 +19,6 @@ interface Rectangle {
     height: number;
     fillColor?: string;
 }
-
 interface MouseDragInfo {
     isDragging: boolean;
     targetType: 'lightSource' | 'obstacle' | null;
@@ -27,7 +26,7 @@ interface MouseDragInfo {
     offsetY: number;
 }
 
-const LightShadowSimulation: React.FC = () => {
+const MonteCarloShadowSimulation: React.FC = () => {
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
     const initialSimulationState: SimulationState = {
         numRays: 10,
@@ -35,7 +34,6 @@ const LightShadowSimulation: React.FC = () => {
         isRunning: false
     }
     const [simulationState, setSimulationState] = React.useState<SimulationState>(initialSimulationState);
-
     const initialLightSourceState: Rectangle = {
         position: {
             x: 100,
@@ -297,4 +295,4 @@ const LightShadowSimulation: React.FC = () => {
     );
 };
 
-export default LightShadowSimulation;
+export default MonteCarloShadowSimulation;
