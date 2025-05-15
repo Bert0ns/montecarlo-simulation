@@ -1,29 +1,45 @@
 "use client"
 
 import React, {useCallback, useEffect, useRef, useState} from "react"
-import { Button } from "@/components/ui/button"
-import { Slider } from "@/components/ui/slider"
-import { RefreshCw, Pause, Play } from "lucide-react"
+import {Button} from "@/components/ui/button"
+import {Slider} from "@/components/ui/slider"
+import {Pause, Play, RefreshCw} from "lucide-react"
 
 interface Point {
     x: number
     y: number
     isInside: boolean
 }
+
 interface Circle {
     x: number
     y: number
     radius: number
 }
 
+interface SimulationState {
+    points: Point[]
+    totalPoints: number
+    pointsInside: number
+    piApproximation: number
+    isRunning: boolean
+    speed: number
+}
+
+
 const MonteCarloPiSimulation: React.FC = ({}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [points, setPoints] = useState<Point[]>([]);
-    const [piApproximation, setPiApproximation] = useState<number>(0);
-    const [isRunning, setIsRunning] = useState<boolean>(false);
-    const [speed, setSpeed] = useState<number>(10);
     const animationRef = useRef<number | null>(null);
     const lastTimeRef = useRef<number>(0);
+
+    const [simulationState, setSimulationState] = useState<SimulationState>({
+        points: [],
+        totalPoints: 0,
+        pointsInside: 0,
+        piApproximation: 0,
+        isRunning: false,
+        speed: 10
+    });
 
     const canvasSize = 400;
     const circle: Circle = {
@@ -33,17 +49,23 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
     }
 
     const resetSimulation = () => {
-        setPoints([]);
-        setPiApproximation(0);
+        setSimulationState({
+            points: [],
+            totalPoints: 0,
+            pointsInside: 0,
+            piApproximation: 0,
+            isRunning: false,
+            speed: simulationState.speed
+        });
+
         if (animationRef.current) {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
         }
-        setIsRunning(false);
     }
 
     const toggleSimulation = () => {
-        setIsRunning((prev) => !prev);
+        setSimulationState( (prevState ) => ({...prevState, isRunning: !prevState.isRunning}));
     }
 
     const animate = useCallback((timestamp: number) => {
@@ -52,25 +74,31 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
             const y: number = Math.random() * 2 - 1
             const isInside: boolean = (x * x + y * y) < 1
 
-            setPoints((prevPoints: Point[]) => {
+            setSimulationState((prev: SimulationState) => {
                 // Convert from [-1,1] coordinates to canvas coordinates
                 const canvasX = (x + 1) * circle.radius;
                 const canvasY = (y + 1) * circle.radius;
 
-                const newPoints: Point[] = [...prevPoints, {x: canvasX, y: canvasY, isInside}];
+                const newPoints: Point[] = [...prev.points, {x: canvasX, y: canvasY, isInside}];
 
                 const pointsInside: number = newPoints.filter((p) => p.isInside).length;
+                let newPiApproximation: number = prev.piApproximation;
                 if (newPoints.length > 0) {
-                    setPiApproximation(4 * (pointsInside / newPoints.length));
+                    newPiApproximation = 4 * (pointsInside / newPoints.length);
                 }
-                return newPoints;
+                return {...prev, 
+                    piApproximation: newPiApproximation, 
+                    points: newPoints, 
+                    totalPoints: newPoints.length, 
+                    pointsInside: pointsInside
+                };
             })
         }
-        
+
         if (!lastTimeRef.current) lastTimeRef.current = timestamp;
 
         const elapsed: number = timestamp - lastTimeRef.current;
-        const pointsToAdd: number = Math.floor((elapsed * speed) / 1000);
+        const pointsToAdd: number = Math.floor((elapsed * simulationState.speed) / 1000);
 
         if (pointsToAdd > 0) {
             lastTimeRef.current = timestamp
@@ -80,10 +108,10 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         }
 
         animationRef.current = requestAnimationFrame(animate)
-    }, [circle.radius, speed])
+    }, [circle.radius, simulationState.speed])
 
     useEffect(() => {
-        if (isRunning) {
+        if (simulationState.isRunning) {
             lastTimeRef.current = 0
             animationRef.current = requestAnimationFrame(animate)
         } else if (animationRef.current) {
@@ -96,7 +124,7 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                 cancelAnimationFrame(animationRef.current)
             }
         }
-    }, [animate, isRunning, speed])
+    }, [animate, simulationState.isRunning])
 
     useEffect(() => {
         const canvas: HTMLCanvasElement | null = canvasRef.current;
@@ -118,21 +146,21 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         ctx.stroke();
 
         // Draw points
-        for (let i = 0; i < points.length; i++) {
-            const point = points[i];
+        for (let i = 0; i < simulationState.points.length; i++) {
+            const point = simulationState.points[i];
             ctx.beginPath();
             ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
             ctx.fillStyle = point.isInside ? "#3b82f6" : "#ef4444";
             ctx.fill();
         }
-    }, [circle.radius, circle.x, circle.y, points])
+    }, [circle.radius, circle.x, circle.y, simulationState.points])
 
     return (
         <div className="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm w-auto">
             <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Interactive Simulation</h2>
 
             <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
-                <div className="w-full h-auto flex justify-center items-center" >
+                <div className="w-full h-auto flex justify-center items-center">
                     <canvas
                         ref={canvasRef}
                         width={canvasSize}
@@ -148,11 +176,11 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                             <div className="grid grid-cols-2 gap-2 sm:gap-4">
                                 <div className="bg-white p-2 sm:p-4 rounded border border-gray-200">
                                     <p className="text-xs sm:text-sm text-gray-500">Total Points</p>
-                                    <p className="text-lg sm:text-2xl font-mono">{points.length}</p>
+                                    <p className="text-lg sm:text-2xl font-mono">{simulationState.totalPoints}</p>
                                 </div>
                                 <div className="bg-white p-2 sm:p-4 rounded border border-gray-200">
                                     <p className="text-xs sm:text-sm text-gray-500">Points Inside</p>
-                                    <p className="text-lg sm:text-2xl font-mono">{points.filter((p) => p.isInside).length}</p>
+                                    <p className="text-lg sm:text-2xl font-mono">{simulationState.pointsInside}</p>
                                 </div>
                             </div>
                         </div>
@@ -161,11 +189,12 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                             <h3 className="text-base sm:text-lg font-medium mb-2">π Approximation</h3>
                             <div className="bg-white p-2 sm:p-4 rounded border border-gray-200">
                                 <p className="text-2xl sm:text-3xl font-mono text-center">
-                                    {piApproximation === 0 ? "—" : piApproximation.toFixed(6)}
+                                    {simulationState.piApproximation === 0 ? "—" : simulationState.piApproximation.toFixed(6)}
                                 </p>
                                 <div className="mt-2 text-center text-xs sm:text-sm text-gray-500">
                                     <p>Actual π: 3.141592653589793...</p>
-                                    {points.length > 0 && <p className="mt-1">Error: {Math.abs(piApproximation - Math.PI).toFixed(6)}</p>}
+                                    {simulationState.totalPoints > 0 &&
+                                        <p className="mt-1">Error: {Math.abs(simulationState.piApproximation - Math.PI).toFixed(6)}</p>}
                                 </div>
                             </div>
                         </div>
@@ -175,11 +204,11 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                             <div className="flex items-center gap-2 sm:gap-4">
                                 <span className="text-xs sm:text-sm">Slow</span>
                                 <Slider
-                                    value={[speed]}
+                                    value={[simulationState.speed]}
                                     min={1}
                                     max={2000}
                                     step={1}
-                                    onValueChange={(value) => setSpeed(value[0])}
+                                    onValueChange={(value) => setSimulationState({...simulationState, speed: value[0]})}
                                     className="flex-1"
                                 />
                                 <span className="text-xs sm:text-sm">Fast</span>
@@ -189,16 +218,16 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
 
                     <div className="flex gap-2 sm:gap-3 mt-4">
                         <Button variant="outline" className="flex-1 text-sm h-9 sm:h-10" onClick={resetSimulation}>
-                            <RefreshCw className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Reset
+                            <RefreshCw className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/> Reset
                         </Button>
                         <Button className="flex-1 text-sm h-9 sm:h-10" onClick={toggleSimulation}>
-                            {isRunning ? (
+                            {simulationState.isRunning ? (
                                 <>
-                                    <Pause className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Pause
+                                    <Pause className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/> Pause
                                 </>
                             ) : (
                                 <>
-                                    <Play className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Start
+                                    <Play className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/> Start
                                 </>
                             )}
                         </Button>
