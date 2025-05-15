@@ -2,7 +2,7 @@ import MathFormula from "@/components/MathFormula";
 
 export function MonteCarloExplanationSection() {
     return (
-        <section className="mb-12">
+        <section className="mb-12 p-6 rounded-sm shadow-sm">
             <h2 className="text-3xl font-bold mb-6">Computing π with Monte Carlo</h2>
             <div className="prose prose-gray max-w-none">
                 <p>
