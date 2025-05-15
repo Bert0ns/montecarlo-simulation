@@ -50,7 +50,7 @@ const MCShadowExplanationSection: React.FC = () => {
                         <h3 className="font-medium mb-2">Flexibility</h3>
                         <p>
                             The method can easily handle complex-shaped light sources and
-                            multiple obstacles without significantly increasing the algorithm's complexity.
+                            multiple obstacles without significantly increasing the algorithm&#39;s complexity.
                         </p>
                     </div>
                     <div className="bg-blue-50 p-4 rounded-lg">
