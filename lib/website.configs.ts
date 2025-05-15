@@ -4,6 +4,8 @@ export const websiteConfigs = {
         { label: "Pi simulation", link: "/" },
         { label: "Shadow simulation", link: "/shadow-simulation" },
     ],
-    title: "Monte Carlo Simulation",
-    description: "A Monte Carlo simulation to estimate the value of Pi.",
+    title: "Monte Carlo Methods",
+    description: "This website explores the method of Monte Carlo, a powerful statistical technique used to model complex systems and make predictions based on random sampling. " +
+        "Through interactive simulations, we will demonstrate how this method can be applied to various scenarios, " +
+        "including estimating the value of pi and simulating the behavior of shadows."
 }
