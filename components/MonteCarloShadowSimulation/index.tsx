@@ -3,38 +3,7 @@ import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
-
-interface SimulationState {
-    isRunning: boolean;
-    numRays: number;
-    showRays: boolean;
-}
-
-interface Point {
-    x: number;
-    y: number;
-}
-
-interface Rectangle {
-    position: Point;
-    width: number;
-    height: number;
-    fillColor?: string;
-}
-
-interface MouseDragInfo {
-    isDragging: boolean;
-    targetType: 'lightSource' | 'obstacle' | null;
-    offsetX: number;
-    offsetY: number;
-}
-
-interface Ray {
-    origin: Point;
-    direction: Point;
-    hitObstacle: boolean;
-    endpoint: Point | null;
-}
+import {MouseDragInfo, Rectangle, SimulationState, Ray, Point} from './index.types';
 
 const MonteCarloShadowSimulation: React.FC = () => {
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
