@@ -19,7 +19,6 @@ interface SimulationState {
     speed: number
 }
 
-
 const MonteCarloPiSimulation: React.FC = ({}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const bufferCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -68,45 +67,6 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         ctx.stroke()
     }, [circle.radius, circle.x, circle.y]);
 
-    // Create buffer canvas once
-    useEffect(() => {
-        bufferCanvasRef.current = document.createElement("canvas")
-        bufferCanvasRef.current.width = canvasSize
-        bufferCanvasRef.current.height = canvasSize
-
-        // Initialize the buffer canvas with the background elements
-        drawBackgroundToBuffer()
-
-        return () => {
-            bufferCanvasRef.current = null
-        }
-    }, [canvasSize, drawBackgroundToBuffer])
-
-
-    const resetSimulation = () => {
-        setSimulationState({
-            totalPoints: 0,
-            pointsInside: 0,
-            piApproximation: 0,
-            isRunning: false,
-            speed: simulationState.speed
-        });
-
-        if (animationRef.current) {
-            cancelAnimationFrame(animationRef.current);
-            animationRef.current = null;
-        }
-
-        drawBackgroundToBuffer();
-        updateMainCanvas();
-        batchSizeRef.current = 50;
-    }
-
-    const toggleSimulation = () => {
-        setSimulationState((prevState) => ({...prevState, isRunning: !prevState.isRunning}));
-    }
-
-    // Function to add points in batches
     const addPointsBatch = useCallback((batchSize: number) => {
         const bufferCanvas = bufferCanvasRef.current
         if (!bufferCanvas) return
@@ -152,6 +112,29 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         updateMainCanvas()
     }, []);
 
+    const resetSimulation = () => {
+        setSimulationState({
+            totalPoints: 0,
+            pointsInside: 0,
+            piApproximation: 0,
+            isRunning: false,
+            speed: simulationState.speed
+        });
+
+        if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+        }
+
+        drawBackgroundToBuffer();
+        updateMainCanvas();
+        batchSizeRef.current = 50;
+    }
+
+    const toggleSimulation = () => {
+        setSimulationState((prevState) => ({...prevState, isRunning: !prevState.isRunning}));
+    }
+
     // Copy buffer canvas to the main canvas
     const updateMainCanvas = () => {
 
@@ -190,6 +173,7 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         animationRef.current = requestAnimationFrame(animate)
     }, [addPointsBatch, simulationState.speed, simulationState.totalPoints])
 
+    //manage the animation
     useEffect(() => {
         if (simulationState.isRunning) {
             lastTimeRef.current = 0
@@ -206,9 +190,18 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         }
     }, [animate, simulationState.isRunning])
 
+    // Initialize the buffer canvas and draw the background
     useEffect(() => {
+        bufferCanvasRef.current = document.createElement("canvas")
+        bufferCanvasRef.current.width = canvasSize;
+        bufferCanvasRef.current.height = canvasSize;
+
+        drawBackgroundToBuffer();
         updateMainCanvas();
-    }, [canvasSize]);
+        return () => {
+            bufferCanvasRef.current = null
+        }
+    }, [canvasSize, drawBackgroundToBuffer])
 
     return (
         <div className="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm w-auto">
