@@ -20,6 +20,13 @@ interface Rectangle {
     fillColor?: string;
 }
 
+interface MouseDragInfo {
+    isDragging: boolean;
+    targetType: 'lightSource' | 'obstacle' | null;
+    offsetX: number;
+    offsetY: number;
+}
+
 const LightShadowSimulation: React.FC = () => {
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
     const canvasWidth = 600;
@@ -63,6 +70,16 @@ const LightShadowSimulation: React.FC = () => {
         ctx.fillRect(obstacle.position.x, obstacle.position.y, obstacle.width, obstacle.height);
     }, [obstacle]);
 
+    const [mouseDragInfo, setMouseDragInfo] = useState<MouseDragInfo>({
+        isDragging: false,
+        targetType: null,
+        offsetX: 0,
+        offsetY: 0
+    });
+
+
+
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -74,19 +91,90 @@ const LightShadowSimulation: React.FC = () => {
         drawObstacle(ctx);
     }, [drawLightSource, drawObstacle]);
 
+    const isPointInRectangle = (point: Point, rect: Rectangle): boolean => {
+        return (
+            point.x >= rect.position.x &&
+            point.x <= rect.position.x + rect.width &&
+            point.y >= rect.position.y &&
+            point.y <= rect.position.y + rect.height
+        );
+    };
 
+    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) return;
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Controlla se il click è avvenuto sulla sorgente di luce
+        if (isPointInRectangle({x: mouseX, y: mouseY}, lightSource)) {
+            setMouseDragInfo({
+                isDragging: true,
+                targetType: 'lightSource',
+                offsetX: mouseX - lightSource.position.x,
+                offsetY: mouseY - lightSource.position.y
+            });
+        }
+        // Controlla se il click è avvenuto sull'ostacolo
+        else if (isPointInRectangle({x: mouseX, y: mouseY}, obstacle)) {
+            setMouseDragInfo({
+                isDragging: true,
+                targetType: 'obstacle',
+                offsetX: mouseX - obstacle.position.x,
+                offsetY: mouseY - obstacle.position.y
+            });
+        }
+    };
+    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!mouseDragInfo.isDragging || !canvasRef.current) return;
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        // Calcola la nuova posizione dell'oggetto trascinato
+        const newX = mouseX - mouseDragInfo.offsetX;
+        const newY = mouseY - mouseDragInfo.offsetY;
+
+        // Limita la posizione all'interno del canvas
+        const limitedX = Math.max(0, Math.min(canvasWidth - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
+        const limitedY = Math.max(0, Math.min(canvasHeight - (mouseDragInfo.targetType === 'lightSource' ? lightSource.height : obstacle.height), newY));
+
+        // Aggiorna la posizione dell'oggetto appropriato
+        if (mouseDragInfo.targetType === 'lightSource') {
+            setLightSource(prev => ({
+                ...prev,
+                position: { x: limitedX, y: limitedY }
+            }));
+        } else if (mouseDragInfo.targetType === 'obstacle') {
+            setObstacle(prev => ({
+                ...prev,
+                position: { x: limitedX, y: limitedY }
+            }));
+        }
+    };
+    const handleMouseUp = () => {
+        setMouseDragInfo({
+            isDragging: false,
+            targetType: null,
+            offsetX: 0,
+            offsetY: 0
+        });
+    };
     const handleRaysChange = (value: number[]) => {
         setSimulationState((prev) => ({...prev, numRays: value[0]}));
     }
-    function resetSimulation() {
+    const resetSimulation = () => {
         setSimulationState(initialSimulationState);
         setLightSource(initialLightSourceState);
         setObstacle(initialObstacleState);
     }
-    function toggleSimulation() {
+    const toggleSimulation = () => {
         setSimulationState((prev) => ({...prev, isRunning: !prev.isRunning}));
     }
-    function handleToggleRays(event: ChangeEvent<HTMLInputElement>): void {
+    const handleToggleRays = (event: ChangeEvent<HTMLInputElement>) => {
         setSimulationState((prev) => ({...prev, showRays: event.target.checked}));
     }
 
@@ -99,6 +187,10 @@ const LightShadowSimulation: React.FC = () => {
                     width={canvasWidth}
                     height={canvasHeight}
                     className="border border-gray-400 rounded mx-auto bg-gray-100"
+                    onMouseDown={handleMouseDown}
+                    onMouseMove={handleMouseMove}
+                    onMouseUp={handleMouseUp}
+                    onMouseLeave={handleMouseUp}
                 />
             </div>
 
