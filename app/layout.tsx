@@ -7,6 +7,7 @@ import {SiteHeader} from "@/components/SiteHeader";
 
 import {Merriweather} from "next/font/google";
 import {NextFontWithVariable} from "next/dist/compiled/@next/font";
+import {websiteConfigs} from "@/lib/website.configs";
 
 const merriweather: NextFontWithVariable = Merriweather({
     subsets: ['latin'],
@@ -16,8 +17,8 @@ const merriweather: NextFontWithVariable = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: "Montecarlo simulation",
-  description: "compute pi using Monte Carlo simulation, through a visual demonstration",
+  title: websiteConfigs.title,
+  description: websiteConfigs.description,
 };
 
 export default function RootLayout({
