@@ -49,7 +49,6 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
     const drawBackgroundToBuffer = useCallback(() => {
         const bufferCanvas = bufferCanvasRef.current
         if (!bufferCanvas) return
-
         const ctx = bufferCanvas.getContext("2d")
         if (!ctx) return
 

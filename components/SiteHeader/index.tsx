@@ -129,8 +129,7 @@ export function SiteHeader() {
                         className="w-32 h-auto"
                     />
                 </Link>
-                <h1 className="text-2xl font-semibold tracking-tight">Monte Carlo Simulation</h1>
-                {isMobile ?
+                { isMobile ?
                     <MobileNav routes={routes}/>
                     :
                     <DesktopNav routes={routes}/>
