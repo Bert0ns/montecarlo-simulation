@@ -29,9 +29,6 @@ interface MouseDragInfo {
 
 const LightShadowSimulation: React.FC = () => {
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
-    const canvasWidth = 600;
-    const canvasHeight = 400;
-    const maxRays = 5000;
     const initialSimulationState: SimulationState = {
         numRays: 10,
         showRays: true,
@@ -59,6 +56,15 @@ const LightShadowSimulation: React.FC = () => {
         fillColor: "#4a4a4a"
     }
     const [obstacle, setObstacle] = useState<Rectangle>(initialObstacleState);
+    const [mouseDragInfo, setMouseDragInfo] = useState<MouseDragInfo>({
+        isDragging: false,
+        targetType: null,
+        offsetX: 0,
+        offsetY: 0
+    });
+    const canvasWidth = 600;
+    const canvasHeight = 400;
+    const maxRays = 5000;
 
     const drawLightSource = useCallback((ctx :CanvasRenderingContext2D) => {
         ctx.fillStyle = lightSource.fillColor || '#d8b101';
@@ -69,16 +75,6 @@ const LightShadowSimulation: React.FC = () => {
         ctx.fillStyle = obstacle.fillColor || '#4a4a4a';
         ctx.fillRect(obstacle.position.x, obstacle.position.y, obstacle.width, obstacle.height);
     }, [obstacle]);
-
-    const [mouseDragInfo, setMouseDragInfo] = useState<MouseDragInfo>({
-        isDragging: false,
-        targetType: null,
-        offsetX: 0,
-        offsetY: 0
-    });
-
-
-
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -99,7 +95,6 @@ const LightShadowSimulation: React.FC = () => {
             point.y <= rect.position.y + rect.height
         );
     };
-
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
