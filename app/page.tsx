@@ -1,11 +1,11 @@
-import MonteCarloSimulation from "@/components/MonteCarloSimulation"
+import MonteCarloPiSimulation from "../components/MonteCarloPiSimulation"
 import {MonteCarloExplanationSection} from "@/components/MonteCarloExplanationSection"
 
 export default function Home() {
     return (
         <main className="container mx-auto px-4 py-8 max-w-4xl">
             <MonteCarloExplanationSection/>
-            <MonteCarloSimulation/>
+            <MonteCarloPiSimulation/>
         </main>
     )
 }

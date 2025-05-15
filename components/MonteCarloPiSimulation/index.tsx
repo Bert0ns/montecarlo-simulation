@@ -16,7 +16,7 @@ interface Circle {
     radius: number
 }
 
-const MonteCarloSimulation: React.FC = ({}) => {
+const MonteCarloPiSimulation: React.FC = ({}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [points, setPoints] = useState<Point[]>([]);
     const [piApproximation, setPiApproximation] = useState<number>(0);
@@ -132,12 +132,12 @@ const MonteCarloSimulation: React.FC = ({}) => {
             <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Interactive Simulation</h2>
 
             <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
-                <div className="scale-70 md:scale-85 lg:scale-100">
+                <div className="w-full h-auto flex justify-center items-center" >
                     <canvas
                         ref={canvasRef}
                         width={canvasSize}
                         height={canvasSize}
-                        className="bg-white border border-gray-200 mx-auto touch-none"
+                        className="bg-white border border-gray-200 max-w-full max-h-full"
                     />
                 </div>
 
@@ -209,4 +209,4 @@ const MonteCarloSimulation: React.FC = ({}) => {
     )
 }
 
-export default MonteCarloSimulation;
+export default MonteCarloPiSimulation;
