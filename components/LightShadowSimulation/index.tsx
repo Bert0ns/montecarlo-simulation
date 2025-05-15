@@ -1,5 +1,5 @@
 "use client";
-import React, {ChangeEvent} from 'react';
+import React, {ChangeEvent, useCallback, useEffect, useMemo} from 'react';
 import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
@@ -8,6 +8,16 @@ interface SimulationState {
     isRunning: boolean;
     numRays: number;
     showRays: boolean;
+}
+interface Point {
+    x: number;
+    y: number;
+}
+interface Rectangle {
+    position: Point;
+    width: number;
+    height: number;
+    fillColor?: string;
 }
 
 const LightShadowSimulation: React.FC = () => {
@@ -22,8 +32,45 @@ const LightShadowSimulation: React.FC = () => {
     }
     const [simulationState, setSimulationState] = React.useState<SimulationState>(initialSimulationState);
 
+    const lightSource: Rectangle = useMemo<Rectangle>(() => ({
+        position: {
+            x: 100,
+            y: 200
+        },
+        width: 10,
+        height: 100,
+        fillColor: "#d8b101"
+    }), []);
+    const obstacle: Rectangle = useMemo<Rectangle>(() => ({
+        position: {
+            x: 400,
+            y: 100
+        },
+        width: 120,
+        height: 70,
+        fillColor: "#4a4a4a"
+    }), []);
 
+    const drawLightSource = useCallback((ctx :CanvasRenderingContext2D) => {
+        ctx.fillStyle = lightSource.fillColor || '#d8b101';
+        ctx.fillRect(lightSource.position.x, lightSource.position.y, lightSource.width, lightSource.height);
+    }, [lightSource]);
 
+    const drawObstacle = useCallback((ctx :CanvasRenderingContext2D) => {
+        ctx.fillStyle = obstacle.fillColor || '#4a4a4a';
+        ctx.fillRect(obstacle.position.x, obstacle.position.y, obstacle.width, obstacle.height);
+    }, [obstacle]);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        drawLightSource(ctx);
+        drawObstacle(ctx);
+    }, [drawLightSource, drawObstacle]);
 
 
     const handleRaysChange = (value: number[]) => {
