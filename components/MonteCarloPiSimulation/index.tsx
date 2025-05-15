@@ -1,15 +1,9 @@
 "use client"
 
-import React, {useCallback, useEffect, useRef, useState} from "react"
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react"
 import {Button} from "@/components/ui/button"
 import {Slider} from "@/components/ui/slider"
 import {Pause, Play, RefreshCw} from "lucide-react"
-
-interface Point {
-    x: number
-    y: number
-    isInside: boolean
-}
 
 interface Circle {
     x: number
@@ -18,7 +12,6 @@ interface Circle {
 }
 
 interface SimulationState {
-    points: Point[]
     totalPoints: number
     pointsInside: number
     piApproximation: number
@@ -29,17 +22,22 @@ interface SimulationState {
 
 const MonteCarloPiSimulation: React.FC = ({}) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const bufferCanvasRef = useRef<HTMLCanvasElement>(null);
     const animationRef = useRef<number | null>(null);
     const lastTimeRef = useRef<number>(0);
+    const batchSizeRef = useRef<number>(50);
 
     const [simulationState, setSimulationState] = useState<SimulationState>({
-        points: [],
         totalPoints: 0,
         pointsInside: 0,
         piApproximation: 0,
         isRunning: false,
         speed: 10
     });
+
+    const piApproximationError: number = useMemo(() => {
+        return Math.abs(simulationState.piApproximation - Math.PI);
+    }, [simulationState.piApproximation]);
 
     const canvasSize = 400;
     const circle: Circle = {
@@ -48,9 +46,45 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         radius: canvasSize / 2
     }
 
+    const drawBackgroundToBuffer = useCallback(() => {
+        const bufferCanvas = bufferCanvasRef.current
+        if (!bufferCanvas) return
+
+        const ctx = bufferCanvas.getContext("2d")
+        if (!ctx) return
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvasSize, canvasSize)
+
+        // Draw square
+        ctx.strokeStyle = "#e5e7eb"
+        ctx.lineWidth = 2
+        ctx.strokeRect(0, 0, canvasSize, canvasSize)
+
+        // Draw circle
+        ctx.beginPath()
+        ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI)
+        ctx.strokeStyle = "#d1d5db"
+        ctx.stroke()
+    }, [circle.radius, circle.x, circle.y]);
+
+    // Create buffer canvas once
+    useEffect(() => {
+        bufferCanvasRef.current = document.createElement("canvas")
+        bufferCanvasRef.current.width = canvasSize
+        bufferCanvasRef.current.height = canvasSize
+
+        // Initialize the buffer canvas with the background elements
+        drawBackgroundToBuffer()
+
+        return () => {
+            bufferCanvasRef.current = null
+        }
+    }, [canvasSize, drawBackgroundToBuffer])
+
+
     const resetSimulation = () => {
         setSimulationState({
-            points: [],
             totalPoints: 0,
             pointsInside: 0,
             piApproximation: 0,
@@ -62,53 +96,99 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
             cancelAnimationFrame(animationRef.current);
             animationRef.current = null;
         }
+
+        drawBackgroundToBuffer();
+        updateMainCanvas();
+        batchSizeRef.current = 50;
     }
 
     const toggleSimulation = () => {
-        setSimulationState( (prevState ) => ({...prevState, isRunning: !prevState.isRunning}));
+        setSimulationState((prevState) => ({...prevState, isRunning: !prevState.isRunning}));
+    }
+
+    // Function to add points in batches
+    const addPointsBatch = useCallback((batchSize: number) => {
+        const bufferCanvas = bufferCanvasRef.current
+        if (!bufferCanvas) return
+        const ctx = bufferCanvas.getContext("2d")
+        if (!ctx) return
+
+        let newPointsInside = 0
+        const pointSize = Math.max(1.5, canvasSize / 200) // Smaller points for better performance
+
+        for (let i = 0; i < batchSize; i++) {
+            const x = Math.random() * 2 - 1;
+            const y = Math.random() * 2 - 1;
+            const isInside = x * x + y * y < 1;
+
+            if (isInside) {
+                newPointsInside++;
+            }
+
+            // Convert from [-1,1] coordinates to canvas coordinates
+            const canvasX = (x + 1) * (canvasSize / 2)
+            const canvasY = (y + 1) * (canvasSize / 2)
+
+            // Draw point directly to the buffer
+            ctx.beginPath();
+            ctx.arc(canvasX, canvasY, pointSize, 0, 2 * Math.PI);
+            ctx.fillStyle = isInside ? "#3b82f6" : "#ef4444";
+            ctx.fill();
+        }
+
+        setSimulationState((prev) => {
+            const newTotalPoints = prev.totalPoints + batchSize
+            const newTotalPointsInside = prev.pointsInside + newPointsInside
+            const newPiApproximation = 4 * (newTotalPointsInside / newTotalPoints)
+
+            return {
+                ...prev,
+                totalPoints: newTotalPoints,
+                pointsInside: newTotalPointsInside,
+                piApproximation: newPiApproximation,
+            }
+        })
+
+        updateMainCanvas()
+    }, []);
+
+    // Copy buffer canvas to the main canvas
+    const updateMainCanvas = () => {
+
+        const canvas = canvasRef.current;
+        const bufferCanvas = bufferCanvasRef.current;
+        if (!canvas || !bufferCanvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
+        ctx.drawImage(bufferCanvas, 0, 0);
     }
 
     const animate = useCallback((timestamp: number) => {
-        const addPoint = () => {
-            const x: number = Math.random() * 2 - 1
-            const y: number = Math.random() * 2 - 1
-            const isInside: boolean = (x * x + y * y) < 1
-
-            setSimulationState((prev: SimulationState) => {
-                // Convert from [-1,1] coordinates to canvas coordinates
-                const canvasX = (x + 1) * circle.radius;
-                const canvasY = (y + 1) * circle.radius;
-
-                const newPoints: Point[] = [...prev.points, {x: canvasX, y: canvasY, isInside}];
-
-                const pointsInside: number = newPoints.filter((p) => p.isInside).length;
-                let newPiApproximation: number = prev.piApproximation;
-                if (newPoints.length > 0) {
-                    newPiApproximation = 4 * (pointsInside / newPoints.length);
-                }
-                return {...prev, 
-                    piApproximation: newPiApproximation, 
-                    points: newPoints, 
-                    totalPoints: newPoints.length, 
-                    pointsInside: pointsInside
-                };
-            })
-        }
-
         if (!lastTimeRef.current) lastTimeRef.current = timestamp;
 
         const elapsed: number = timestamp - lastTimeRef.current;
-        const pointsToAdd: number = Math.floor((elapsed * simulationState.speed) / 1000);
+
+        // Adjust batch size based on performance
+        // If frame time is low, increase batch size; if high, decrease it
+        if (elapsed > 0) {
+            const fps = 1000 / elapsed;
+            if (fps > 50 && simulationState.totalPoints > 1000) {
+                batchSizeRef.current = Math.min(5000, batchSizeRef.current * 1.2);
+            } else if (fps < 30) {
+                batchSizeRef.current = Math.max(10, batchSizeRef.current * 0.8);
+            }
+        }
+        const pointsToAdd = Math.floor((elapsed * simulationState.speed * batchSizeRef.current) / 10000) //perchè diviso 10K e non 1K?
 
         if (pointsToAdd > 0) {
             lastTimeRef.current = timestamp
-            for (let i = 0; i < pointsToAdd; i++) {
-                addPoint();
-            }
+            addPointsBatch(pointsToAdd);
         }
 
         animationRef.current = requestAnimationFrame(animate)
-    }, [circle.radius, simulationState.speed])
+    }, [addPointsBatch, simulationState.speed, simulationState.totalPoints])
 
     useEffect(() => {
         if (simulationState.isRunning) {
@@ -127,33 +207,8 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
     }, [animate, simulationState.isRunning])
 
     useEffect(() => {
-        const canvas: HTMLCanvasElement | null = canvasRef.current;
-        if (!canvas) return;
-        const ctx: CanvasRenderingContext2D | null = canvas.getContext("2d");
-        if (!ctx) return;
-
-        ctx.clearRect(0, 0, canvasSize, canvasSize)
-
-        // Draw square
-        ctx.strokeStyle = "#e5e7eb";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(0, 0, canvasSize, canvasSize);
-
-        // Draw circle
-        ctx.beginPath();
-        ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
-        ctx.strokeStyle = "#d1d5db";
-        ctx.stroke();
-
-        // Draw points
-        for (let i = 0; i < simulationState.points.length; i++) {
-            const point = simulationState.points[i];
-            ctx.beginPath();
-            ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
-            ctx.fillStyle = point.isInside ? "#3b82f6" : "#ef4444";
-            ctx.fill();
-        }
-    }, [circle.radius, circle.x, circle.y, simulationState.points])
+        updateMainCanvas();
+    }, [canvasSize]);
 
     return (
         <div className="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm w-auto">
@@ -194,7 +249,7 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                                 <div className="mt-2 text-center text-xs sm:text-sm text-gray-500">
                                     <p>Actual π: 3.141592653589793...</p>
                                     {simulationState.totalPoints > 0 &&
-                                        <p className="mt-1">Error: {Math.abs(simulationState.piApproximation - Math.PI).toFixed(6)}</p>}
+                                        <p className="mt-1">Error: {piApproximationError.toFixed(6)}</p>}
                                 </div>
                             </div>
                         </div>
