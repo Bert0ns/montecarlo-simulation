@@ -1,5 +1,5 @@
 "use client";
-import React, {ChangeEvent, useCallback, useEffect, useMemo} from 'react';
+import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
 import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
@@ -32,7 +32,7 @@ const LightShadowSimulation: React.FC = () => {
     }
     const [simulationState, setSimulationState] = React.useState<SimulationState>(initialSimulationState);
 
-    const lightSource: Rectangle = useMemo<Rectangle>(() => ({
+    const initialLightSourceState: Rectangle = {
         position: {
             x: 100,
             y: 200
@@ -40,8 +40,9 @@ const LightShadowSimulation: React.FC = () => {
         width: 10,
         height: 100,
         fillColor: "#d8b101"
-    }), []);
-    const obstacle: Rectangle = useMemo<Rectangle>(() => ({
+    }
+    const [lightSource, setLightSource] = useState<Rectangle>(initialLightSourceState);
+    const initialObstacleState: Rectangle = {
         position: {
             x: 400,
             y: 100
@@ -49,7 +50,8 @@ const LightShadowSimulation: React.FC = () => {
         width: 120,
         height: 70,
         fillColor: "#4a4a4a"
-    }), []);
+    }
+    const [obstacle, setObstacle] = useState<Rectangle>(initialObstacleState);
 
     const drawLightSource = useCallback((ctx :CanvasRenderingContext2D) => {
         ctx.fillStyle = lightSource.fillColor || '#d8b101';
@@ -78,6 +80,8 @@ const LightShadowSimulation: React.FC = () => {
     }
     function resetSimulation() {
         setSimulationState(initialSimulationState);
+        setLightSource(initialLightSourceState);
+        setObstacle(initialObstacleState);
     }
     function toggleSimulation() {
         setSimulationState((prev) => ({...prev, isRunning: !prev.isRunning}));
@@ -142,6 +146,63 @@ const LightShadowSimulation: React.FC = () => {
                             />
                             Show Light Rays
                         </label>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-2 p-4 border border-gray-300 rounded-lg">
+                    <h2 className="text-lg font-semibold">Objects in the scene</h2>
+                    <h3>Light Source</h3>
+                    <div className="flex items-center justify-between">
+                        <label className="flex-1 text-sm">width:</label>
+                        <span className="ml-2 w-12 text-right">1</span>
+                        <Slider
+                            min={1}
+                            max={canvasWidth*0.7}
+                            step={1}
+                            value={[lightSource.width]}
+                            onValueChange={(value) => (setLightSource({...lightSource, width: value[0]}))}
+                            className="flex-1"
+                        />
+                        <span className="ml-2 w-12 text-right">{lightSource.width}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <label className="flex-1 text-sm">height:</label>
+                        <span className="ml-2 w-12 text-right">1</span>
+                        <Slider
+                            min={1}
+                            max={canvasHeight*0.7}
+                            step={1}
+                            value={[lightSource.height]}
+                            onValueChange={(value) => (setLightSource({...lightSource, height: value[0]}))}
+                            className="flex-1"
+                        />
+                        <span className="ml-2 w-12 text-right">{lightSource.height}</span>
+                    </div>
+                    <h3>Obstacle</h3>
+                    <div className="flex items-center justify-between">
+                        <label className="flex-1 text-sm">width:</label>
+                        <span className="ml-2 w-12 text-right">1</span>
+                        <Slider
+                            min={1}
+                            max={canvasWidth*0.7}
+                            step={1}
+                            value={[obstacle.width]}
+                            onValueChange={(value) => (setObstacle({...obstacle, width: value[0]}))}
+                            className="flex-1"
+                        />
+                        <span className="ml-2 w-12 text-right">{obstacle.width}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <label className="flex-1 text-sm">height:</label>
+                        <span className="ml-2 w-12 text-right">1</span>
+                        <Slider
+                            min={1}
+                            max={canvasHeight*0.7}
+                            step={1}
+                            value={[obstacle.height]}
+                            onValueChange={(value) => (setObstacle({...obstacle, height: value[0]}))}
+                            className="flex-1"
+                        />
+                        <span className="ml-2 w-12 text-right">{obstacle.height}</span>
                     </div>
                 </div>
             </div>
