@@ -25,13 +25,14 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
     const animationRef = useRef<number | null>(null);
     const lastTimeRef = useRef<number>(0);
     const batchSizeRef = useRef<number>(50);
+    const maxSpeed: number = 50000;
 
     const [simulationState, setSimulationState] = useState<SimulationState>({
         totalPoints: 0,
         pointsInside: 0,
         piApproximation: 0,
         isRunning: false,
-        speed: 10
+        speed: 100
     });
 
     const piApproximationError: number = useMemo(() => {
@@ -156,21 +157,27 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         // Adjust batch size based on performance
         // If frame time is low, increase batch size; if high, decrease it
         if (elapsed > 0) {
-            const fps = 1000 / elapsed;
-            if (fps > 50 && simulationState.totalPoints > 1000) {
-                batchSizeRef.current = Math.min(5000, batchSizeRef.current * 1.2);
-            } else if (fps < 30) {
-                batchSizeRef.current = Math.max(10, batchSizeRef.current * 0.8);
-            }
+            resizeBatch(elapsed);
         }
-        const pointsToAdd = Math.floor((elapsed * simulationState.speed * batchSizeRef.current) / 10000) //perchè diviso 10K e non 1K?
+        const pointsToAdd = Math.floor((elapsed * batchSizeRef.current) / 1000)
 
         if (pointsToAdd > 0) {
             lastTimeRef.current = timestamp
             addPointsBatch(pointsToAdd);
         }
 
-        animationRef.current = requestAnimationFrame(animate)
+        animationRef.current = requestAnimationFrame(animate);
+
+        function resizeBatch(elapsed: number) {
+            const fps = 1000 / elapsed;
+            if (fps > 50 && simulationState.totalPoints > 1000) {
+                batchSizeRef.current = Math.min(simulationState.speed, batchSizeRef.current * 1.2);
+            } else if (fps < 30) {
+                batchSizeRef.current = Math.max(1, batchSizeRef.current * 0.8);
+            } else {
+                batchSizeRef.current = simulationState.speed;
+            }
+        }
     }, [addPointsBatch, simulationState.speed, simulationState.totalPoints])
 
     //manage the animation
@@ -254,7 +261,7 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                                 <Slider
                                     value={[simulationState.speed]}
                                     min={1}
-                                    max={2000}
+                                    max={maxSpeed}
                                     step={1}
                                     onValueChange={(value) => setSimulationState({...simulationState, speed: value[0]})}
                                     className="flex-1"
