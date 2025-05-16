@@ -1,12 +1,19 @@
 "use client";
-import React, {ChangeEvent, useCallback, useEffect, useState} from 'react';
+import React, {ChangeEvent, useCallback, useEffect, useMemo, useState} from 'react';
 import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
-import {MouseDragInfo, Rectangle, SimulationState, Ray, Point} from './index.types';
+import {MouseDragInfo, SimulationState} from './index.types';
+import {convertToCanvasCoordinates, isPointInRectangle, checkCanvasBorderIntersection, checkRectangleIntersection, drawRay, CanvasObject, Rectangle, Ray, Point} from "@/lib/canvas-utils";
 
 const MonteCarloShadowSimulation: React.FC = () => {
+    const maxRays = 10000;
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+    const canvasObject: CanvasObject = useMemo<CanvasObject>(() => ({
+        width: 600,
+        height: 400,
+        canvasRef: canvasRef,
+    }), []);
     const initialSimulationState: SimulationState = {
         numRays: 600,
         showRays: true,
@@ -40,18 +47,11 @@ const MonteCarloShadowSimulation: React.FC = () => {
         offsetY: 0
     });
     const animationRef = React.useRef<number | null>(null);
-    const canvasWidth = 600;
-    const canvasHeight = 400;
-    const maxRays = 10000;
-    const rayHitColor = 'rgba(255, 0, 0, 0.15)';
-    const rayMissColor = 'rgba(255, 255, 0, 0.15)';
     const [shadowCellSize, setShadowCellSize] = useState<number>(4) // dimensione delle celle in pixel
-
     const drawLightSource = useCallback((ctx: CanvasRenderingContext2D) => {
         ctx.fillStyle = lightSource.fillColor || '#d8b101';
         ctx.fillRect(lightSource.position.x, lightSource.position.y, lightSource.width, lightSource.height);
     }, [lightSource]);
-
     const drawObstacle = useCallback((ctx: CanvasRenderingContext2D) => {
         ctx.fillStyle = obstacle.fillColor || '#4a4a4a';
         ctx.fillRect(obstacle.position.x, obstacle.position.y, obstacle.width, obstacle.height);
@@ -94,7 +94,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         }
 
         // Verifica intersezione con i bordi del canvas
-        const borderHit = checkCanvasBorderIntersection(ray.origin, ray.direction);
+        const borderHit = checkCanvasBorderIntersection(ray, canvasObject);
         if (borderHit.hit && borderHit.t < t) {
             t = borderHit.t;
         }
@@ -106,120 +106,13 @@ const MonteCarloShadowSimulation: React.FC = () => {
         };
 
         return result;
-    }, [obstacle]);
-
-    // Funzione per verificare l'intersezione con un rettangolo
-    const checkRectangleIntersection = (ray: Ray, object: Rectangle) => {
-        const {origin, direction} = ray;
-        const {position: rectPos, width: rectWidth, height: rectHeight} = object;
-        let hit = false;
-        let tMin = Infinity;
-
-        // Verifica intersezione con i quattro lati del rettangolo
-        // Lato sinistro
-        if (direction.x > 0) {
-            const t = (rectPos.x - origin.x) / direction.x;
-            if (t > 0) {
-                const y = origin.y + t * direction.y;
-                if (y >= rectPos.y && y <= rectPos.y + rectHeight && t < tMin) {
-                    tMin = t;
-                    hit = true;
-                }
-            }
-        }
-        // Lato destro
-        if (direction.x < 0) {
-            const t = (rectPos.x + rectWidth - origin.x) / direction.x;
-            if (t > 0) {
-                const y = origin.y + t * direction.y;
-                if (y >= rectPos.y && y <= rectPos.y + rectHeight && t < tMin) {
-                    tMin = t;
-                    hit = true;
-                }
-            }
-        }
-        // Lato superiore
-        if (direction.y > 0) {
-            const t = (rectPos.y - origin.y) / direction.y;
-            if (t > 0) {
-                const x = origin.x + t * direction.x;
-                if (x >= rectPos.x && x <= rectPos.x + rectWidth && t < tMin) {
-                    tMin = t;
-                    hit = true;
-                }
-            }
-        }
-        // Lato inferiore
-        if (direction.y < 0) {
-            const t = (rectPos.y + rectHeight - origin.y) / direction.y;
-            if (t > 0) {
-                const x = origin.x + t * direction.x;
-                if (x >= rectPos.x && x <= rectPos.x + rectWidth && t < tMin) {
-                    tMin = t;
-                    hit = true;
-                }
-            }
-        }
-
-        return {hit, t: tMin};
-    };
-
-    // Funzione per verificare l'intersezione con i bordi del canvas
-    const checkCanvasBorderIntersection = (origin: Point, direction: Point) => {
-        let hit = false;
-        let tMin = Infinity;
-
-        // Bordo destro
-        if (direction.x > 0) {
-            const t = (canvasWidth - origin.x) / direction.x;
-            if (t > 0 && t < tMin) {
-                tMin = t;
-                hit = true;
-            }
-        }
-        // Bordo sinistro
-        if (direction.x < 0) {
-            const t = -origin.x / direction.x;
-            if (t > 0 && t < tMin) {
-                tMin = t;
-                hit = true;
-            }
-        }
-        // Bordo inferiore
-        if (direction.y > 0) {
-            const t = (canvasHeight - origin.y) / direction.y;
-            if (t > 0 && t < tMin) {
-                tMin = t;
-                hit = true;
-            }
-        }
-        // Bordo superiore
-        if (direction.y < 0) {
-            const t = -origin.y / direction.y;
-            if (t > 0 && t < tMin) {
-                tMin = t;
-                hit = true;
-            }
-        }
-
-        return {hit, t: tMin};
-    };
-
-    // Funzione per disegnare un raggio
-    const drawRay = (ctx: CanvasRenderingContext2D, ray: Ray) => {
-        if (!ray.endpoint) return;
-        ctx.beginPath();
-        ctx.moveTo(ray.origin.x, ray.origin.y);
-        ctx.lineTo(ray.endpoint.x, ray.endpoint.y);
-        ctx.strokeStyle = ray.hitObstacle ? rayHitColor : rayMissColor;
-        ctx.stroke();
-    };
+    }, [canvasObject, obstacle]);
 
     // Funzione per disegnare l'ombra usando un approccio a densità
     const drawShadow = useCallback((ctx: CanvasRenderingContext2D, rays: Ray[]) => {
         // Creiamo una matrice di celle per calcolare la densità dell'ombra
-        const gridWidth = Math.ceil(canvasWidth / shadowCellSize);
-        const gridHeight = Math.ceil(canvasHeight / shadowCellSize);
+        const gridWidth = Math.ceil(canvasObject.width / shadowCellSize);
+        const gridHeight = Math.ceil(canvasObject.height / shadowCellSize);
         const shadowGrid = Array(gridWidth * gridHeight).fill(0);
 
         // Per ogni raggio che colpisce l'ostacolo, tracciamo una "scia" di ombra
@@ -239,7 +132,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                 let currentY = ray.endpoint.y;
 
                 // Tracciamo punti fino al bordo del canvas
-                while (currentX >= 0 && currentX < canvasWidth && currentY >= 0 && currentY < canvasHeight) {
+                while (currentX >= 0 && currentX < canvasObject.width && currentY >= 0 && currentY < canvasObject.height) {
                     const gridX = Math.floor(currentX / shadowCellSize);
                     const gridY = Math.floor(currentY / shadowCellSize);
 
@@ -266,7 +159,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                 }
             }
         }
-    }, [shadowCellSize, simulationState.numRays]);
+    }, [canvasObject.height, canvasObject.width, shadowCellSize, simulationState.numRays]);
 
     // MAIN
     const simulateLightRays = useCallback(() => {
@@ -276,7 +169,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         if (!ctx) return;
 
         // Puliamo il canvas e ridisegniamo gli elementi base
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.clearRect(0, 0, canvasObject.width, canvasObject.height);
         drawLightSource(ctx);
         drawObstacle(ctx);
 
@@ -293,7 +186,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
         // Calcoliamo e disegniamo l'ombra
         drawShadow(ctx, rays);
-    }, [drawLightSource, drawObstacle, drawShadow, generateRandomRay, simulationState.numRays, simulationState.showRays, findRayCollision]);
+    }, [canvasObject.width, canvasObject.height, drawLightSource, drawObstacle, drawShadow, simulationState.numRays, simulationState.showRays, generateRandomRay, findRayCollision]);
 
     //Animation useEffect
     useEffect(() => {
@@ -322,31 +215,11 @@ const MonteCarloShadowSimulation: React.FC = () => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.clearRect(0, 0, canvasObject.width, canvasObject.height);
         drawLightSource(ctx);
         drawObstacle(ctx);
-    }, [drawLightSource, drawObstacle]);
+    }, [canvasObject.height, canvasObject.width, drawLightSource, drawObstacle]);
 
-    const isPointInRectangle = (point: Point, rect: Rectangle): boolean => {
-        return (
-            point.x >= rect.position.x &&
-            point.x <= rect.position.x + rect.width &&
-            point.y >= rect.position.y &&
-            point.y <= rect.position.y + rect.height
-        );
-    };
-    const getCanvasScaleFactor = useCallback(() => {
-        if (!canvasRef.current) return { scaleX: 1, scaleY: 1 };
-
-        const canvas = canvasRef.current;
-        const displayWidth = canvas.clientWidth;
-        const displayHeight = canvas.clientHeight;
-
-        return {
-            scaleX: canvasWidth / displayWidth,
-            scaleY: canvasHeight / displayHeight
-        };
-    }, []);
     const updateIfClickPointInObject = (point: Point) => {
         const pointX = point.x;
         const pointY = point.y;
@@ -375,8 +248,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
         const newY = finalPosition.y - mouseDragInfo.offsetY;
 
         // Limita la posizione all'interno del canvas
-        const limitedX = Math.max(0, Math.min(canvasWidth - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
-        const limitedY = Math.max(0, Math.min(canvasHeight - (mouseDragInfo.targetType === 'lightSource' ? lightSource.height : obstacle.height), newY));
+        const limitedX = Math.max(0, Math.min(canvasObject.width - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
+        const limitedY = Math.max(0, Math.min(canvasObject.height - (mouseDragInfo.targetType === 'lightSource' ? lightSource.height : obstacle.height), newY));
 
         // Aggiorna la posizione dell'oggetto appropriato
         if (mouseDragInfo.targetType === 'lightSource') {
@@ -391,27 +264,15 @@ const MonteCarloShadowSimulation: React.FC = () => {
             }));
         }
     }
-    const convertToCanvasCoordinates = (point: Point): Point => {
-        if (!canvasRef.current) return point;
-
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const { scaleX, scaleY } = getCanvasScaleFactor();
-
-        return {
-            x: (point.x - rect.left) * scaleX,
-            y: (point.y - rect.top) * scaleY
-        };
-    }
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
-        const click: Point = convertToCanvasCoordinates({x: e.clientX, y: e.clientY});
+        const click: Point = convertToCanvasCoordinates({x: e.clientX, y: e.clientY}, canvasObject);
         updateIfClickPointInObject(click);
     };
     const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!mouseDragInfo.isDragging || !canvasRef.current) return;
-        const click: Point = convertToCanvasCoordinates({x: e.clientX, y: e.clientY});
+        const click: Point = convertToCanvasCoordinates({x: e.clientX, y: e.clientY}, canvasObject);
         handleObjectMove(click);
     };
     const handleMouseUp = () => {
@@ -427,14 +288,14 @@ const MonteCarloShadowSimulation: React.FC = () => {
         e.preventDefault(); // Previene lo scrolling durante il drag
         if (!canvasRef.current || e.touches.length === 0) return;
         const touch = e.touches[0];
-        const touchPoint: Point = convertToCanvasCoordinates({x: touch.clientX, y: touch.clientY});
+        const touchPoint: Point = convertToCanvasCoordinates({x: touch.clientX, y: touch.clientY}, canvasObject);
         updateIfClickPointInObject(touchPoint);
     };
     const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
         e.preventDefault();
         if (!mouseDragInfo.isDragging || !canvasRef.current || e.touches.length === 0) return;
         const touch = e.touches[0];
-        const touchPoint: Point = convertToCanvasCoordinates({x: touch.clientX, y: touch.clientY});
+        const touchPoint: Point = convertToCanvasCoordinates({x: touch.clientX, y: touch.clientY}, canvasObject);
         handleObjectMove(touchPoint);
     };
     const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
@@ -469,8 +330,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
             <div className="border border-gray-300 rounded-lg p-2 sm:pl-16 sm:pr-16 md:pl-32 md:pr-32 lg:pl-48 lg:pr-48 w-full h-auto flex justify-center items-center">
                 <canvas
                     ref={canvasRef}
-                    width={canvasWidth}
-                    height={canvasHeight}
+                    width={canvasObject.width}
+                    height={canvasObject.height}
                     className="border border-gray-400 rounded mx-auto bg-gray-100 max-w-full max-h-full touch-none"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
@@ -562,7 +423,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                             <span className="text-xs w-6 sm:w-12 text-right">1</span>
                             <Slider
                                 min={1}
-                                max={canvasWidth * 0.7}
+                                max={canvasObject.width * 0.7}
                                 step={1}
                                 value={[lightSource.width]}
                                 onValueChange={(value) => (setLightSource({...lightSource, width: value[0]}))}
@@ -578,7 +439,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                             <span className="text-xs w-6 sm:w-12 text-right">1</span>
                             <Slider
                                 min={1}
-                                max={canvasHeight * 0.7}
+                                max={canvasObject.height * 0.7}
                                 step={1}
                                 value={[lightSource.height]}
                                 onValueChange={(value) => (setLightSource({...lightSource, height: value[0]}))}
@@ -595,7 +456,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                             <span className="text-xs w-6 sm:w-12 text-right">1</span>
                             <Slider
                                 min={1}
-                                max={canvasWidth * 0.7}
+                                max={canvasObject.width * 0.7}
                                 step={1}
                                 value={[obstacle.width]}
                                 onValueChange={(value) => (setObstacle({...obstacle, width: value[0]}))}
@@ -611,7 +472,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                             <span className="text-xs w-6 sm:w-12 text-right">1</span>
                             <Slider
                                 min={1}
-                                max={canvasHeight * 0.7}
+                                max={canvasObject.height * 0.7}
                                 step={1}
                                 value={[obstacle.height]}
                                 onValueChange={(value) => (setObstacle({...obstacle, height: value[0]}))}
