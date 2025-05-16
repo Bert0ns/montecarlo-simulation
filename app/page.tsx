@@ -1,6 +1,7 @@
 import {websiteConfigs} from "@/website.configs";
 import PiSimulationCard from "@/components/PiSimulationCard";
 import ShadowSimulationCard from "@/components/ShadowSimulationCard";
+import Link from "next/link";
 
 const HomePage = () => {
     return (
@@ -31,6 +32,22 @@ const HomePage = () => {
                         These methods are especially useful for optimization, numerical integration, and generating
                         draws from probability distributions.
                     </p>
+                    <br/>
+                    <div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">More</h3>
+                        <ul>
+                            <li>
+                                <Link href={"https://en.wikipedia.org/wiki/Monte_Carlo_method"} className="text-blue-500 hover:underline">
+                                    More about Monte Carlo methods
+                                </Link>
+                            </li>
+                            <li>
+                                <Link href={"https://en.wikipedia.org/wiki/Path_tracing"} className="text-blue-500 hover:underline">
+                                    Monte Carlo methods in path tracing
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </section>
 
