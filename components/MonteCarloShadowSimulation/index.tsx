@@ -514,6 +514,9 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
                 <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 rounded-lg">
                     <h2 className="text-base sm:text-lg font-semibold">Objects in the scene</h2>
+                    <p className="text-sm font-light text-gray-600">
+                        Drag the light source and the obstacle to change their position.
+                    </p>
 
                     <h3 className="text-sm mt-1 font-semibold">Light Source</h3>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between">
