@@ -499,7 +499,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                 <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 rounded-lg">
                     <h2 className="text-base sm:text-lg font-semibold">Objects in the scene</h2>
 
-                    <h3 className="text-sm font-medium mt-1">Light Source</h3>
+                    <h3 className="text-sm mt-1 font-semibold">Light Source</h3>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between">
                         <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">width:</label>
                         <div className="flex items-center w-full sm:w-auto sm:flex-1">
@@ -532,7 +532,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
                         </div>
                     </div>
 
-                    <h3 className="text-sm font-medium mt-1">Obstacle</h3>
+                    <h3 className="text-sm mt-1 font-semibold">Obstacle</h3>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between">
                         <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">width:</label>
                         <div className="flex items-center w-full sm:w-auto sm:flex-1">
