@@ -5,19 +5,6 @@ const MCShadowExplanationSection: React.FC = () => {
         <div className="max-w-4xl mx-auto p-6 bg-white rounded-sm shadow-sm mb-8">
             <h1 className="text-3xl font-semibold mb-4">Application of the Monte Carlo method to Shadows</h1>
 
-            {/*<section className="mb-8">
-                <h2 className="text-2xl font-semibold mb-4">What is the Monte Carlo Method?</h2>
-                <p className="mb-3">
-                    The Monte Carlo method is a computational approach that uses repeated random sampling
-                    to obtain numerical results. This method is particularly useful for complex problems
-                    where exact analytical solutions are difficult or impossible to calculate.
-                </p>
-                <p>
-                    It gets its name from the famous Monte Carlo casino in Monaco, due to its similarity to
-                    games of chance that rely on randomness and probability.
-                </p>
-            </section>*/}
-
             <section className="mb-8">
 
                 <p className="mb-3">

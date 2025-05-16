@@ -1,7 +1,7 @@
 export const websiteConfigs = {
     logo_img: "/images/logo.png",
     menuItems: [
-        { label: "Pi simulation", link: "/" },
+        { label: "Pi simulation", link: "/pi-simulation" },
         { label: "Shadow simulation", link: "/shadow-simulation" },
     ],
     title: "Monte Carlo Methods",
