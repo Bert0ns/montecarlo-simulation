@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 import {cn} from "@/lib/utils";
 import {SiteHeaderProps} from "@/components/SiteHeader/index.types";
-import {websiteConfigs} from "@/lib/website.configs";
+import {websiteConfigs} from "@/website.configs";
 import {Route} from "@/components/SiteHeader/index.types";
 import {usePathname} from "next/navigation";
 import {useMobile} from "@/lib/hooks/use-mobile";

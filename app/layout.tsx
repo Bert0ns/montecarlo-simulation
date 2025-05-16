@@ -7,7 +7,7 @@ import {SiteHeader} from "@/components/SiteHeader";
 
 import {Merriweather} from "next/font/google";
 import {NextFontWithVariable} from "next/dist/compiled/@next/font";
-import {websiteConfigs} from "@/lib/website.configs";
+import {websiteConfigs} from "@/website.configs";
 
 const merriweather: NextFontWithVariable = Merriweather({
     subsets: ['latin'],
