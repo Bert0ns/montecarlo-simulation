@@ -8,7 +8,7 @@ import {MouseDragInfo, Rectangle, SimulationState, Ray, Point} from './index.typ
 const MonteCarloShadowSimulation: React.FC = () => {
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
     const initialSimulationState: SimulationState = {
-        numRays: 10,
+        numRays: 600,
         showRays: true,
         isRunning: false
     }
@@ -414,14 +414,15 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col gap-4 p-4 max-w-6xl mx-auto">
-            <h1 className="text-2xl font-bold text-center">Monte Carlo Shadow Simulator</h1>
-            <div className="border border-gray-300 rounded-lg p-4">
+        <div className="flex flex-col gap-2 sm:gap-4 p-2 sm:p-4 max-w-full mx-auto">
+            <h1 className="text-xl sm:text-2xl font-bold text-center">Monte Carlo Shadow Simulator</h1>
+
+            <div className="border border-gray-300 rounded-lg p-2 sm:pl-16 sm:pr-16 md:pl-32 md:pr-32 lg:pl-48 lg:pr-48 w-full h-auto flex justify-center items-center">
                 <canvas
                     ref={canvasRef}
                     width={canvasWidth}
                     height={canvasHeight}
-                    className="border border-gray-400 rounded mx-auto bg-gray-100"
+                    className="border border-gray-400 rounded mx-auto bg-gray-100 max-w-full max-h-full"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
@@ -429,43 +430,45 @@ const MonteCarloShadowSimulation: React.FC = () => {
                 />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2 p-4 border border-gray-300 rounded-lg">
-                    <h2 className="text-lg font-semibold">Simulation Controls</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 rounded-lg">
+                    <h2 className="text-base sm:text-lg font-semibold">Simulation Controls</h2>
 
-                    <div className="flex gap-2 sm:gap-3 mt-4">
-                        <Button variant="outline" className="flex-1 text-sm h-9 sm:h-10" onClick={resetSimulation}>
-                            <RefreshCw className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/> Reset
+                    <div className="flex gap-1 sm:gap-3 mt-2 sm:mt-4">
+                        <Button variant="outline" className="flex-1 text-xs sm:text-sm h-8 sm:h-10" onClick={resetSimulation}>
+                            <RefreshCw className="mr-1 h-3 w-3 sm:h-4 sm:w-4"/> Reset
                         </Button>
-                        <Button className="flex-1 text-sm h-9 sm:h-10" onClick={toggleSimulation}>
+                        <Button className="flex-1 text-xs sm:text-sm h-8 sm:h-10" onClick={toggleSimulation}>
                             {simulationState.isRunning ? (
                                 <>
-                                    <Pause className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/> Pause
+                                    <Pause className="mr-1 h-3 w-3 sm:h-4 sm:w-4"/> Pause
                                 </>
                             ) : (
                                 <>
-                                    <Play className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4"/> Start
+                                    <Play className="mr-1 h-3 w-3 sm:h-4 sm:w-4"/> Start
                                 </>
                             )}
                         </Button>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <label className="flex-1">Number of Rays:</label>
-                        <span className="ml-2 w-12 text-right">1</span>
-                        <Slider
-                            min={1}
-                            max={maxRays}
-                            step={1}
-                            value={[simulationState.numRays]}
-                            onValueChange={handleRaysChange}
-                            className="flex-1"
-                        />
-                        <span className="ml-2 w-12 text-right">{simulationState.numRays}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2">
+                        <label className="text-sm mb-1 sm:mb-0 sm:flex-1">Number of Rays:</label>
+                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
+                            <span className="text-xs sm:text-sm w-6 sm:w-12 text-right">1</span>
+                            <Slider
+                                min={1}
+                                max={maxRays}
+                                step={1}
+                                value={[simulationState.numRays]}
+                                onValueChange={handleRaysChange}
+                                className="flex-1 mx-2"
+                            />
+                            <span className="text-xs sm:text-sm w-8 sm:w-12 text-right">{simulationState.numRays}</span>
+                        </div>
                     </div>
 
                     <div className="flex items-center mt-2">
-                        <label className="flex items-center">
+                        <label className="flex items-center text-sm">
                             <input
                                 type="checkbox"
                                 checked={simulationState.showRays}
@@ -476,75 +479,90 @@ const MonteCarloShadowSimulation: React.FC = () => {
                         </label>
                     </div>
 
-                    <div className="flex items-center justify-between mt-2">
-                        <label className="flex-1">Shadow Cell Size:</label>
-                        <span className="ml-2 w-12 text-right">1</span>
-                        <Slider
-                            min={1}
-                            max={20}
-                            step={1}
-                            value={[shadowCellSize]}
-                            onValueChange={(value) => setShadowCellSize(value[0])}
-                            className="flex-1"
-                        />
-                        <span className="ml-2 w-12 text-right">{shadowCellSize}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2">
+                        <label className="text-sm mb-1 sm:mb-0 sm:flex-1">Shadow Cell Size:</label>
+                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
+                            <span className="text-xs sm:text-sm w-6 sm:w-12 text-right">1</span>
+                            <Slider
+                                min={1}
+                                max={20}
+                                step={1}
+                                value={[shadowCellSize]}
+                                onValueChange={(value) => setShadowCellSize(value[0])}
+                                className="flex-1 mx-2"
+                            />
+                            <span className="text-xs sm:text-sm w-8 sm:w-12 text-right">{shadowCellSize}</span>
+                        </div>
                     </div>
                 </div>
-                <div className="flex flex-col gap-2 p-4 border border-gray-300 rounded-lg">
-                    <h2 className="text-lg font-semibold">Objects in the scene</h2>
-                    <h3>Light Source</h3>
-                    <div className="flex items-center justify-between">
-                        <label className="flex-1 text-sm">width:</label>
-                        <span className="ml-2 w-12 text-right">1</span>
-                        <Slider
-                            min={1}
-                            max={canvasWidth * 0.7}
-                            step={1}
-                            value={[lightSource.width]}
-                            onValueChange={(value) => (setLightSource({...lightSource, width: value[0]}))}
-                            className="flex-1"
-                        />
-                        <span className="ml-2 w-12 text-right">{lightSource.width}</span>
+
+                <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 rounded-lg">
+                    <h2 className="text-base sm:text-lg font-semibold">Objects in the scene</h2>
+
+                    <h3 className="text-sm font-medium mt-1">Light Source</h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">width:</label>
+                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
+                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
+                            <Slider
+                                min={1}
+                                max={canvasWidth * 0.7}
+                                step={1}
+                                value={[lightSource.width]}
+                                onValueChange={(value) => (setLightSource({...lightSource, width: value[0]}))}
+                                className="flex-1 mx-2"
+                            />
+                            <span className="text-xs w-8 sm:w-12 text-right">{lightSource.width}</span>
+                        </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                        <label className="flex-1 text-sm">height:</label>
-                        <span className="ml-2 w-12 text-right">1</span>
-                        <Slider
-                            min={1}
-                            max={canvasHeight * 0.7}
-                            step={1}
-                            value={[lightSource.height]}
-                            onValueChange={(value) => (setLightSource({...lightSource, height: value[0]}))}
-                            className="flex-1"
-                        />
-                        <span className="ml-2 w-12 text-right">{lightSource.height}</span>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">height:</label>
+                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
+                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
+                            <Slider
+                                min={1}
+                                max={canvasHeight * 0.7}
+                                step={1}
+                                value={[lightSource.height]}
+                                onValueChange={(value) => (setLightSource({...lightSource, height: value[0]}))}
+                                className="flex-1 mx-2"
+                            />
+                            <span className="text-xs w-8 sm:w-12 text-right">{lightSource.height}</span>
+                        </div>
                     </div>
-                    <h3>Obstacle</h3>
-                    <div className="flex items-center justify-between">
-                        <label className="flex-1 text-sm">width:</label>
-                        <span className="ml-2 w-12 text-right">1</span>
-                        <Slider
-                            min={1}
-                            max={canvasWidth * 0.7}
-                            step={1}
-                            value={[obstacle.width]}
-                            onValueChange={(value) => (setObstacle({...obstacle, width: value[0]}))}
-                            className="flex-1"
-                        />
-                        <span className="ml-2 w-12 text-right">{obstacle.width}</span>
+
+                    <h3 className="text-sm font-medium mt-1">Obstacle</h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">width:</label>
+                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
+                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
+                            <Slider
+                                min={1}
+                                max={canvasWidth * 0.7}
+                                step={1}
+                                value={[obstacle.width]}
+                                onValueChange={(value) => (setObstacle({...obstacle, width: value[0]}))}
+                                className="flex-1 mx-2"
+                            />
+                            <span className="text-xs w-8 sm:w-12 text-right">{obstacle.width}</span>
+                        </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                        <label className="flex-1 text-sm">height:</label>
-                        <span className="ml-2 w-12 text-right">1</span>
-                        <Slider
-                            min={1}
-                            max={canvasHeight * 0.7}
-                            step={1}
-                            value={[obstacle.height]}
-                            onValueChange={(value) => (setObstacle({...obstacle, height: value[0]}))}
-                            className="flex-1"
-                        />
-                        <span className="ml-2 w-12 text-right">{obstacle.height}</span>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">height:</label>
+                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
+                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
+                            <Slider
+                                min={1}
+                                max={canvasHeight * 0.7}
+                                step={1}
+                                value={[obstacle.height]}
+                                onValueChange={(value) => (setObstacle({...obstacle, height: value[0]}))}
+                                className="flex-1 mx-2"
+                            />
+                            <span className="text-xs w-8 sm:w-12 text-right">{obstacle.height}</span>
+                        </div>
                     </div>
                 </div>
             </div>
