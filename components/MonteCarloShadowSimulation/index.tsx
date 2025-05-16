@@ -335,12 +335,26 @@ const MonteCarloShadowSimulation: React.FC = () => {
             point.y <= rect.position.y + rect.height
         );
     };
+    const getCanvasScaleFactor = useCallback(() => {
+        if (!canvasRef.current) return { scaleX: 1, scaleY: 1 };
+
+        const canvas = canvasRef.current;
+        const displayWidth = canvas.clientWidth;
+        const displayHeight = canvas.clientHeight;
+
+        return {
+            scaleX: canvasWidth / displayWidth,
+            scaleY: canvasHeight / displayHeight
+        };
+    }, []);
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+
+        const { scaleX, scaleY } = getCanvasScaleFactor();
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
 
         // Controlla se il click è avvenuto sulla sorgente di luce
         if (isPointInRectangle({x: mouseX, y: mouseY}, lightSource)) {
@@ -366,8 +380,10 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
         const canvas = canvasRef.current;
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+
+        const { scaleX, scaleY } = getCanvasScaleFactor();
+        const mouseX = (e.clientX - rect.left) * scaleX;
+        const mouseY = (e.clientY - rect.top) * scaleY;
 
         // Calcola la nuova posizione dell'oggetto trascinato
         const newX = mouseX - mouseDragInfo.offsetX;
