@@ -414,6 +414,75 @@ const MonteCarloShadowSimulation: React.FC = () => {
             offsetY: 0
         });
     };
+
+    const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault(); // Previene lo scrolling durante il drag
+        if (!canvasRef.current || e.touches.length === 0) return;
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+
+        const { scaleX, scaleY } = getCanvasScaleFactor();
+        const touchX = (touch.clientX - rect.left) * scaleX;
+        const touchY = (touch.clientY - rect.top) * scaleY;
+
+        if (isPointInRectangle({x: touchX, y: touchY}, lightSource)) {
+            setMouseDragInfo({
+                isDragging: true,
+                targetType: 'lightSource',
+                offsetX: touchX - lightSource.position.x,
+                offsetY: touchY - lightSource.position.y
+            });
+        } else if (isPointInRectangle({x: touchX, y: touchY}, obstacle)) {
+            setMouseDragInfo({
+                isDragging: true,
+                targetType: 'obstacle',
+                offsetX: touchX - obstacle.position.x,
+                offsetY: touchY - obstacle.position.y
+            });
+        }
+    };
+    const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        if (!mouseDragInfo.isDragging || !canvasRef.current || e.touches.length === 0) return;
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+
+        const { scaleX, scaleY } = getCanvasScaleFactor();
+        const touchX = (touch.clientX - rect.left) * scaleX;
+        const touchY = (touch.clientY - rect.top) * scaleY;
+
+        const newX = touchX - mouseDragInfo.offsetX;
+        const newY = touchY - mouseDragInfo.offsetY;
+
+        const limitedX = Math.max(0, Math.min(canvasWidth - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
+        const limitedY = Math.max(0, Math.min(canvasHeight - (mouseDragInfo.targetType === 'lightSource' ? lightSource.height : obstacle.height), newY));
+
+        if (mouseDragInfo.targetType === 'lightSource') {
+            setLightSource(prev => ({
+                ...prev,
+                position: {x: limitedX, y: limitedY}
+            }));
+        } else if (mouseDragInfo.targetType === 'obstacle') {
+            setObstacle(prev => ({
+                ...prev,
+                position: {x: limitedX, y: limitedY}
+            }));
+        }
+    };
+    const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+        e.preventDefault();
+        setMouseDragInfo({
+            isDragging: false,
+            targetType: null,
+            offsetX: 0,
+            offsetY: 0
+        });
+    };
+
     const handleRaysChange = (value: number[]) => {
         setSimulationState((prev) => ({...prev, numRays: value[0]}));
     }
@@ -438,11 +507,15 @@ const MonteCarloShadowSimulation: React.FC = () => {
                     ref={canvasRef}
                     width={canvasWidth}
                     height={canvasHeight}
-                    className="border border-gray-400 rounded mx-auto bg-gray-100 max-w-full max-h-full"
+                    className="border border-gray-400 rounded mx-auto bg-gray-100 max-w-full max-h-full touch-none"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseUp}
+
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                 />
             </div>
 
