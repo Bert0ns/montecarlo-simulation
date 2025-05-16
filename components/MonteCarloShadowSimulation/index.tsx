@@ -347,47 +347,32 @@ const MonteCarloShadowSimulation: React.FC = () => {
             scaleY: canvasHeight / displayHeight
         };
     }, []);
-    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!canvasRef.current) return;
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-
-        const { scaleX, scaleY } = getCanvasScaleFactor();
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
-
+    const updateIfClickPointInObject = (point: Point) => {
+        const pointX = point.x;
+        const pointY = point.y;
         // Controlla se il click è avvenuto sulla sorgente di luce
-        if (isPointInRectangle({x: mouseX, y: mouseY}, lightSource)) {
+        if (isPointInRectangle({x: pointX, y: pointY}, lightSource)) {
             setMouseDragInfo({
                 isDragging: true,
                 targetType: 'lightSource',
-                offsetX: mouseX - lightSource.position.x,
-                offsetY: mouseY - lightSource.position.y
+                offsetX: pointX - lightSource.position.x,
+                offsetY: pointY - lightSource.position.y
             });
         }
         // Controlla se il click è avvenuto sull'ostacolo
-        else if (isPointInRectangle({x: mouseX, y: mouseY}, obstacle)) {
+        else if (isPointInRectangle({x: pointX, y: pointY}, obstacle)) {
             setMouseDragInfo({
                 isDragging: true,
                 targetType: 'obstacle',
-                offsetX: mouseX - obstacle.position.x,
-                offsetY: mouseY - obstacle.position.y
+                offsetX: pointX - obstacle.position.x,
+                offsetY: pointY - obstacle.position.y
             });
         }
-    };
-    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-        if (!mouseDragInfo.isDragging || !canvasRef.current) return;
-
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-
-        const { scaleX, scaleY } = getCanvasScaleFactor();
-        const mouseX = (e.clientX - rect.left) * scaleX;
-        const mouseY = (e.clientY - rect.top) * scaleY;
-
+    }
+    const handleObjectMove = (finalPosition: Point) => {
         // Calcola la nuova posizione dell'oggetto trascinato
-        const newX = mouseX - mouseDragInfo.offsetX;
-        const newY = mouseY - mouseDragInfo.offsetY;
+        const newX = finalPosition.x - mouseDragInfo.offsetX;
+        const newY = finalPosition.y - mouseDragInfo.offsetY;
 
         // Limita la posizione all'interno del canvas
         const limitedX = Math.max(0, Math.min(canvasWidth - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
@@ -405,6 +390,29 @@ const MonteCarloShadowSimulation: React.FC = () => {
                 position: {x: limitedX, y: limitedY}
             }));
         }
+    }
+    const convertToCanvasCoordinates = (point: Point): Point => {
+        if (!canvasRef.current) return point;
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const { scaleX, scaleY } = getCanvasScaleFactor();
+
+        return {
+            x: (point.x - rect.left) * scaleX,
+            y: (point.y - rect.top) * scaleY
+        };
+    }
+
+    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!canvasRef.current) return;
+        const click: Point = convertToCanvasCoordinates({x: e.clientX, y: e.clientY});
+        updateIfClickPointInObject(click);
+    };
+    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+        if (!mouseDragInfo.isDragging || !canvasRef.current) return;
+        const click: Point = convertToCanvasCoordinates({x: e.clientX, y: e.clientY});
+        handleObjectMove(click);
     };
     const handleMouseUp = () => {
         setMouseDragInfo({
@@ -418,60 +426,16 @@ const MonteCarloShadowSimulation: React.FC = () => {
     const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
         e.preventDefault(); // Previene lo scrolling durante il drag
         if (!canvasRef.current || e.touches.length === 0) return;
-
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
         const touch = e.touches[0];
-
-        const { scaleX, scaleY } = getCanvasScaleFactor();
-        const touchX = (touch.clientX - rect.left) * scaleX;
-        const touchY = (touch.clientY - rect.top) * scaleY;
-
-        if (isPointInRectangle({x: touchX, y: touchY}, lightSource)) {
-            setMouseDragInfo({
-                isDragging: true,
-                targetType: 'lightSource',
-                offsetX: touchX - lightSource.position.x,
-                offsetY: touchY - lightSource.position.y
-            });
-        } else if (isPointInRectangle({x: touchX, y: touchY}, obstacle)) {
-            setMouseDragInfo({
-                isDragging: true,
-                targetType: 'obstacle',
-                offsetX: touchX - obstacle.position.x,
-                offsetY: touchY - obstacle.position.y
-            });
-        }
+        const touchPoint: Point = convertToCanvasCoordinates({x: touch.clientX, y: touch.clientY});
+        updateIfClickPointInObject(touchPoint);
     };
     const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
         e.preventDefault();
         if (!mouseDragInfo.isDragging || !canvasRef.current || e.touches.length === 0) return;
-
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
         const touch = e.touches[0];
-
-        const { scaleX, scaleY } = getCanvasScaleFactor();
-        const touchX = (touch.clientX - rect.left) * scaleX;
-        const touchY = (touch.clientY - rect.top) * scaleY;
-
-        const newX = touchX - mouseDragInfo.offsetX;
-        const newY = touchY - mouseDragInfo.offsetY;
-
-        const limitedX = Math.max(0, Math.min(canvasWidth - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
-        const limitedY = Math.max(0, Math.min(canvasHeight - (mouseDragInfo.targetType === 'lightSource' ? lightSource.height : obstacle.height), newY));
-
-        if (mouseDragInfo.targetType === 'lightSource') {
-            setLightSource(prev => ({
-                ...prev,
-                position: {x: limitedX, y: limitedY}
-            }));
-        } else if (mouseDragInfo.targetType === 'obstacle') {
-            setObstacle(prev => ({
-                ...prev,
-                position: {x: limitedX, y: limitedY}
-            }));
-        }
+        const touchPoint: Point = convertToCanvasCoordinates({x: touch.clientX, y: touch.clientY});
+        handleObjectMove(touchPoint);
     };
     const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
         e.preventDefault();
