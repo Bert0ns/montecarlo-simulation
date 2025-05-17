@@ -4,12 +4,12 @@ import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
 import {MouseDragInfo, SimulationState} from './index.types';
-import {convertToCanvasCoordinates, isPointInRectangle, checkCanvasBorderIntersection, checkRectangleIntersection, drawRay, CanvasObject, Rectangle, Ray, Point} from "@/lib/canvas-utils";
+import {convertToCanvasCoordinates, isPointInRectangle, checkCanvasBorderIntersection, checkRectangleIntersection, drawRay, CanvasRef, Rectangle, Ray, Point} from "@/lib/canvas-utils";
 
 const MonteCarloShadowSimulation: React.FC = () => {
     const maxRays = 10000;
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
-    const canvasObject: CanvasObject = useMemo<CanvasObject>(() => ({
+    const canvasObject: CanvasRef = useMemo<CanvasRef>(() => ({
         width: 1000,
         height: 350,
         canvasRef: canvasRef,

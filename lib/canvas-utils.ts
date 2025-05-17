@@ -5,14 +5,17 @@ export interface Point {
     y: number;
 }
 
-export interface Rectangle {
+export interface CanvasObject {
     position: Point;
+}
+
+export interface Rectangle extends CanvasObject {
     width: number;
     height: number;
     fillColor?: string;
 }
 
-export interface CanvasObject {
+export interface CanvasRef {
     width: number,
     height: number,
     canvasRef: React.RefObject<HTMLCanvasElement | null>,
@@ -25,7 +28,7 @@ export interface Ray {
     endpoint: Point | null;
 }
 
-export const convertToCanvasCoordinates = (point: Point, canvasObject:  CanvasObject): Point => {
+export const convertToCanvasCoordinates = (point: Point, canvasObject:  CanvasRef): Point => {
     const canvasRef: React.RefObject<HTMLCanvasElement | null>  = canvasObject.canvasRef;
     if (!canvasRef.current) return point;
 
@@ -39,7 +42,7 @@ export const convertToCanvasCoordinates = (point: Point, canvasObject:  CanvasOb
     };
 }
 
-const getCanvasScaleFactor = (canvasObject:  CanvasObject) => {
+const getCanvasScaleFactor = (canvasObject:  CanvasRef) => {
     const canvasRef: React.RefObject<HTMLCanvasElement | null>  = canvasObject.canvasRef;
     if (!canvasRef.current) return { scaleX: 1, scaleY: 1 };
 
@@ -68,7 +71,7 @@ const rayHitColor = 'rgba(255, 0, 0, 0.15)';
 const rayMissColor = 'rgba(255, 255, 0, 0.15)';
 
 // Funzione per verificare l'intersezione con i bordi del canvas
-export const checkCanvasBorderIntersection = (ray: Ray, canvasObject: CanvasObject) => {
+export const checkCanvasBorderIntersection = (ray: Ray, canvasObject: CanvasRef) => {
     let hit = false;
     let tMin = Infinity;
 
