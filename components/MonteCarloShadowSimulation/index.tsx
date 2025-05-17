@@ -18,6 +18,10 @@ import {
     SceneObject
 } from "@/lib/canvas-utils";
 
+//TODO: check the functions that draws the shadows, it is not working as expected
+
+//TODO: if multiple obstacles are present, the drag and drop features work only on 1
+
 
 const MonteCarloShadowSimulation: React.FC = () => {
     const maxRays = 10000;
@@ -57,7 +61,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         height: 120,
         fillColor: "#4a4a4a"
     }
-    const [sceneObjects , setSceneObjects] = useState<SceneObject[]>([initialLightSourceState, initialObstacleState]);
+    const [sceneObjects , setSceneObjects] = useState<SceneObject[]>([initialLightSourceState, initialObstacleState, initialObstacleState]);
 
     const initialMouseDragInfoState: MouseDragInfo = {
         isDragging: false,
@@ -333,7 +337,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const resetSimulation = () => {
         setSimulationState(initialSimulationState);
-        setSceneObjects([initialLightSourceState, initialObstacleState]);
+        setSceneObjects([initialLightSourceState, initialObstacleState, initialObstacleState]);
         setShadowCellSize(4);
     }
     const toggleSimulation = () => {
