@@ -7,7 +7,7 @@ export interface SimulationState {
 
 export interface MouseDragInfo {
     isDragging: boolean;
-    targetType: 'lightSource' | 'obstacle' | null;
+    targetId: string | null;
     offsetX: number;
     offsetY: number;
 }

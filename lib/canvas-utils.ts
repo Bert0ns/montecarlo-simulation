@@ -1,5 +1,10 @@
 import React from "react";
 
+export enum CanvasObjectType {
+    RECTANGLE = "rectangle",
+    CIRCLE = "circle",
+}
+
 export interface Point {
     x: number;
     y: number;
@@ -7,9 +12,12 @@ export interface Point {
 
 export interface CanvasObject {
     position: Point;
+    type: CanvasObjectType;
+    id: string;
 }
 
 export interface Rectangle extends CanvasObject {
+    type: CanvasObjectType.RECTANGLE;
     width: number;
     height: number;
     fillColor?: string;

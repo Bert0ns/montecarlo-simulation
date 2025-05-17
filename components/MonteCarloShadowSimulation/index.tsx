@@ -4,7 +4,18 @@ import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
 import {MouseDragInfo, SimulationState} from './index.types';
-import {convertToCanvasCoordinates, isPointInRectangle, checkCanvasBorderIntersection, checkRectangleIntersection, drawRay, CanvasRef, Rectangle, Ray, Point} from "@/lib/canvas-utils";
+import {
+    CanvasObjectType,
+    CanvasRef,
+    checkCanvasBorderIntersection,
+    checkRectangleIntersection,
+    convertToCanvasCoordinates,
+    drawRay,
+    isPointInRectangle,
+    Point,
+    Ray,
+    Rectangle
+} from "@/lib/canvas-utils";
 
 const MonteCarloShadowSimulation: React.FC = () => {
     const maxRays = 10000;
@@ -21,6 +32,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const [simulationState, setSimulationState] = React.useState<SimulationState>(initialSimulationState);
     const initialLightSourceState: Rectangle = {
+        type: CanvasObjectType.RECTANGLE,
+        id: "rectangle-0",
         position: {
             x: 100,
             y: 100
@@ -31,6 +44,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const [lightSource, setLightSource] = useState<Rectangle>(initialLightSourceState);
     const initialObstacleState: Rectangle = {
+        type: CanvasObjectType.RECTANGLE,
+        id: "lightSource-0",
         position: {
             x: 400,
             y: 100
@@ -40,12 +55,13 @@ const MonteCarloShadowSimulation: React.FC = () => {
         fillColor: "#4a4a4a"
     }
     const [obstacle, setObstacle] = useState<Rectangle>(initialObstacleState);
-    const [mouseDragInfo, setMouseDragInfo] = useState<MouseDragInfo>({
+    const initialMouseDragInfoState: MouseDragInfo = {
         isDragging: false,
-        targetType: null,
+        targetId: null,
         offsetX: 0,
         offsetY: 0
-    });
+    }
+    const [mouseDragInfo, setMouseDragInfo] = useState<MouseDragInfo>(initialMouseDragInfoState);
     const animationRef = React.useRef<number | null>(null);
     const [shadowCellSize, setShadowCellSize] = useState<number>(4) // dimensione delle celle in pixel
     const drawLightSource = useCallback((ctx: CanvasRenderingContext2D) => {
@@ -227,7 +243,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         if (isPointInRectangle({x: pointX, y: pointY}, lightSource)) {
             setMouseDragInfo({
                 isDragging: true,
-                targetType: 'lightSource',
+                targetId: 'lightSource-0',
                 offsetX: pointX - lightSource.position.x,
                 offsetY: pointY - lightSource.position.y
             });
@@ -236,7 +252,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         else if (isPointInRectangle({x: pointX, y: pointY}, obstacle)) {
             setMouseDragInfo({
                 isDragging: true,
-                targetType: 'obstacle',
+                targetId: 'obstacle-0',
                 offsetX: pointX - obstacle.position.x,
                 offsetY: pointY - obstacle.position.y
             });
@@ -248,16 +264,16 @@ const MonteCarloShadowSimulation: React.FC = () => {
         const newY = finalPosition.y - mouseDragInfo.offsetY;
 
         // Limita la posizione all'interno del canvas
-        const limitedX = Math.max(0, Math.min(canvasObject.width - (mouseDragInfo.targetType === 'lightSource' ? lightSource.width : obstacle.width), newX));
-        const limitedY = Math.max(0, Math.min(canvasObject.height - (mouseDragInfo.targetType === 'lightSource' ? lightSource.height : obstacle.height), newY));
+        const limitedX = Math.max(0, Math.min(canvasObject.width - (mouseDragInfo.targetId === 'lightSource-0' ? lightSource.width : obstacle.width), newX));
+        const limitedY = Math.max(0, Math.min(canvasObject.height - (mouseDragInfo.targetId === 'lightSource-0' ? lightSource.height : obstacle.height), newY));
 
         // Aggiorna la posizione dell'oggetto appropriato
-        if (mouseDragInfo.targetType === 'lightSource') {
+        if (mouseDragInfo.targetId === 'lightSource-0') {
             setLightSource(prev => ({
                 ...prev,
                 position: {x: limitedX, y: limitedY}
             }));
-        } else if (mouseDragInfo.targetType === 'obstacle') {
+        } else if (mouseDragInfo.targetId === 'obstacle-0') {
             setObstacle(prev => ({
                 ...prev,
                 position: {x: limitedX, y: limitedY}
@@ -276,12 +292,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         handleObjectMove(click);
     };
     const handleMouseUp = () => {
-        setMouseDragInfo({
-            isDragging: false,
-            targetType: null,
-            offsetX: 0,
-            offsetY: 0
-        });
+        setMouseDragInfo(initialMouseDragInfoState);
     };
 
     const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
@@ -300,12 +311,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
     };
     const handleTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
         e.preventDefault();
-        setMouseDragInfo({
-            isDragging: false,
-            targetType: null,
-            offsetX: 0,
-            offsetY: 0
-        });
+        setMouseDragInfo(initialMouseDragInfoState);
     };
 
     const handleRaysChange = (value: number[]) => {
