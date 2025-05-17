@@ -10,13 +10,13 @@ export interface Point {
     y: number;
 }
 
-export interface CanvasObject {
+export interface SceneObject {
     position: Point;
     type: CanvasObjectType;
     id: string;
 }
 
-export interface Rectangle extends CanvasObject {
+export interface Rectangle extends SceneObject {
     type: CanvasObjectType.RECTANGLE;
     width: number;
     height: number;
