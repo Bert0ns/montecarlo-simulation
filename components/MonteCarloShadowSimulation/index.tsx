@@ -10,8 +10,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
     const maxRays = 10000;
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
     const canvasObject: CanvasObject = useMemo<CanvasObject>(() => ({
-        width: 600,
-        height: 400,
+        width: 1000,
+        height: 350,
         canvasRef: canvasRef,
     }), []);
     const initialSimulationState: SimulationState = {
@@ -23,10 +23,10 @@ const MonteCarloShadowSimulation: React.FC = () => {
     const initialLightSourceState: Rectangle = {
         position: {
             x: 100,
-            y: 200
+            y: 100
         },
-        width: 20,
-        height: 110,
+        width: 30,
+        height: 30,
         fillColor: "#c051f4"
     }
     const [lightSource, setLightSource] = useState<Rectangle>(initialLightSourceState);
@@ -35,8 +35,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
             x: 400,
             y: 100
         },
-        width: 120,
-        height: 70,
+        width: 70,
+        height: 120,
         fillColor: "#4a4a4a"
     }
     const [obstacle, setObstacle] = useState<Rectangle>(initialObstacleState);
@@ -327,7 +327,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         <div className="flex flex-col gap-2 sm:gap-4 p-2 sm:p-4 max-w-full mx-auto">
             <h1 className="text-xl sm:text-2xl font-bold text-center">Monte Carlo Shadow Simulator</h1>
 
-            <div className="border border-gray-300 rounded-lg p-2 sm:pl-16 sm:pr-16 md:pl-32 md:pr-32 lg:pl-48 lg:pr-48 w-full h-auto flex justify-center items-center">
+            <div className="border border-gray-300 rounded-lg p-2 sm:pl-10 sm:pr-10 md:pl-14 md:pr-14 w-full flex justify-center items-center">
                 <canvas
                     ref={canvasRef}
                     width={canvasObject.width}
