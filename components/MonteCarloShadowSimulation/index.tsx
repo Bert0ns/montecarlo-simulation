@@ -5,22 +5,16 @@ import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
 import {MouseDragInfo, SimulationState} from './index.types';
 import {
-    CanvasObjectType,
     CanvasRef,
     checkCanvasBorderIntersection,
     checkRectangleIntersection,
     convertToCanvasCoordinates,
     drawRay,
     isPointInRectangle,
-    Point,
-    Ray,
-    Rectangle,
-    SceneObject
-} from "@/lib/canvas-utils";
+} from "@/lib/canvas-utils/canvas-utils";
+import {Ray, Rectangle, SceneObject, Point, CanvasObjectType } from '@/lib/canvas-utils/scene-objects';
 
 //TODO: check the functions that draws the shadows, it is not working as expected
-
-//TODO: if multiple obstacles are present, the drag and drop features work only on 1
 
 
 const MonteCarloShadowSimulation: React.FC = () => {
@@ -39,29 +33,10 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const [simulationState, setSimulationState] = React.useState<SimulationState>(initialSimulationState);
 
-    const initialLightSourceState: Rectangle = {
-        type: CanvasObjectType.RECTANGLE,
-        id: "lightSource-0",
-        position: {
-            x: 100,
-            y: 100
-        },
-        width: 30,
-        height: 30,
-        fillColor: "#c051f4"
-    }
-    const initialObstacleState: Rectangle = {
-        type: CanvasObjectType.RECTANGLE,
-        id: "obstacle-0",
-        position: {
-            x: 400,
-            y: 100
-        },
-        width: 70,
-        height: 120,
-        fillColor: "#4a4a4a"
-    }
-    const [sceneObjects , setSceneObjects] = useState<SceneObject[]>([initialLightSourceState, initialObstacleState, initialObstacleState]);
+    const initialLightSourceState: Rectangle = new Rectangle({x: 100, y: 100}, "lightSource", 30, 30, "#c051f4");
+    const initialObstacle0State: Rectangle = new Rectangle({x: 400, y: 100}, "obstacle", 70, 120, "#4a4a4a");
+    const initialObstacle1State: Rectangle = new Rectangle({x: 500, y: 200}, "obstacle", 30, 100, "#4a4a4a");
+    const [sceneObjects, setSceneObjects] = useState<SceneObject[]>([initialLightSourceState, initialObstacle0State, initialObstacle1State]);
 
     const initialMouseDragInfoState: MouseDragInfo = {
         isDragging: false,
@@ -73,7 +48,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
     const animationRef = React.useRef<number | null>(null);
     const [shadowCellSize, setShadowCellSize] = useState<number>(4) // dimensione delle celle in pixel
-    
+
     const drawRectangleObject = useCallback((ctx: CanvasRenderingContext2D, object: Rectangle) => {
         ctx.fillStyle = object.fillColor || '#ff0000';
         ctx.fillRect(object.position.x, object.position.y, object.width, object.height);
@@ -82,10 +57,9 @@ const MonteCarloShadowSimulation: React.FC = () => {
     const initializeCanvasDrawings = useCallback((ctx: CanvasRenderingContext2D) => {
         ctx.clearRect(0, 0, canvasObject.width, canvasObject.height);
         sceneObjects.forEach(obj => {
-            if(obj.type === CanvasObjectType.RECTANGLE) {
+            if (obj.type === CanvasObjectType.RECTANGLE) {
                 drawRectangleObject(ctx, obj as Rectangle)
-            }
-            else {
+            } else {
                 throw new Error('Unsupported object type');
             }
         });
@@ -94,12 +68,12 @@ const MonteCarloShadowSimulation: React.FC = () => {
     /*-----------Light rays computation------------*/
 
     const generateRandomRay = useCallback((): Ray => {
-        const lightSourceObject = sceneObjects.find(obj => obj.id === 'lightSource-0');
+        const lightSourceObject = sceneObjects.find(obj => obj.name === 'lightSource');
         if (!lightSourceObject) {
             throw new Error('Light source not found');
         }
         const lightSource = lightSourceObject as Rectangle;
-        
+
         // Scegli un punto casuale sulla sorgente luminosa
         const originX = lightSource.position.x + (Math.random() > 0.5 ? lightSource.width : 0);
         const originY = lightSource.position.y + Math.random() * lightSource.height;
@@ -128,18 +102,17 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
         // Verifica intersezione con l'ostacolo
         sceneObjects.filter(obj => obj.id.startsWith("obstacle")).forEach(obstacle => {
-            if(obstacle.type === CanvasObjectType.RECTANGLE) {
-                const obstacleHit = checkRectangleIntersection(ray,  obstacle as Rectangle);
+            if (obstacle.type === CanvasObjectType.RECTANGLE) {
+                const obstacleHit = checkRectangleIntersection(ray, obstacle as Rectangle);
                 if (obstacleHit.hit && obstacleHit.t < t) {
                     t = obstacleHit.t;
                     result.hitObstacle = true;
                 }
-            }
-            else {
+            } else {
                 throw new Error('Unsupported object type');
             }
         });
-        
+
         // Verifica intersezione con i bordi del canvas
         const borderHit = checkCanvasBorderIntersection(ray, canvasObject);
         if (borderHit.hit && borderHit.t < t) {
@@ -251,7 +224,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }, [simulationState.isRunning, simulateLightRays]);
 
     /*-----------end Light rays computation------------*/
-    
+
     // draw objects on startup
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -263,7 +236,11 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
     const updateIfClickPointInObject = (point: Point) => {
         sceneObjects.forEach((obj) => {
-            if(obj.type === CanvasObjectType.RECTANGLE && isPointInRectangle(point, obj as Rectangle)) {
+            if (obj.type !== CanvasObjectType.RECTANGLE) {
+                throw new Error('Unsupported object type');
+            }
+
+            if (isPointInRectangle(point, obj as Rectangle)) {
                 setMouseDragInfo({
                     isDragging: true,
                     targetId: obj.id,
@@ -283,7 +260,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         if (sceneObjects[targetedObjectIndex].type !== CanvasObjectType.RECTANGLE) {
             throw new Error('Unsupported object type');
         }
-        const target :Rectangle = sceneObjects[targetedObjectIndex] as Rectangle;
+        const target: Rectangle = sceneObjects[targetedObjectIndex] as Rectangle;
 
         // Limita la posizione all'interno del canvas
         const limitedX = Math.max(0, Math.min(canvasObject.width - target.width, newX));
@@ -337,7 +314,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const resetSimulation = () => {
         setSimulationState(initialSimulationState);
-        setSceneObjects([initialLightSourceState, initialObstacleState, initialObstacleState]);
+        setSceneObjects([new Rectangle(initialLightSourceState), new Rectangle(initialObstacle0State), new Rectangle(initialObstacle1State)]);
         setShadowCellSize(4);
     }
     const toggleSimulation = () => {
@@ -351,7 +328,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
         <div className="flex flex-col gap-2 sm:gap-4 p-2 sm:p-4 max-w-full mx-auto">
             <h1 className="text-xl sm:text-2xl font-bold text-center">Monte Carlo Shadow Simulator</h1>
 
-            <div className="border border-gray-300 rounded-lg p-2 sm:pl-10 sm:pr-10 md:pl-14 md:pr-14 w-full flex justify-center items-center">
+            <div
+                className="border border-gray-300 rounded-lg p-2 sm:pl-10 sm:pr-10 md:pl-14 md:pr-14 w-full flex justify-center items-center">
                 <canvas
                     ref={canvasRef}
                     width={canvasObject.width}
@@ -373,7 +351,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
                     <h2 className="text-base sm:text-lg font-semibold">Simulation Controls</h2>
 
                     <div className="flex gap-1 sm:gap-3 mt-2 sm:mt-4">
-                        <Button variant="outline" className="flex-1 text-xs sm:text-sm h-8 sm:h-10" onClick={resetSimulation}>
+                        <Button variant="outline" className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
+                                onClick={resetSimulation}>
                             <RefreshCw className="mr-1 h-3 w-3 sm:h-4 sm:w-4"/> Reset
                         </Button>
                         <Button className="flex-1 text-xs sm:text-sm h-8 sm:h-10" onClick={toggleSimulation}>
@@ -452,16 +431,13 @@ const MonteCarloShadowSimulation: React.FC = () => {
                                 value={[(sceneObjects[0] as Rectangle).width]}
                                 onValueChange={(value) => (setSceneObjects((prev) => {
                                     const newObjects = [...prev];
-                                    const rect : Rectangle= {
-                                        ...(newObjects[0] as Rectangle),
-                                        width: value[0]
-                                    }
-                                    newObjects[0] = rect as SceneObject;
+                                    (newObjects[0] as Rectangle).width = value[0];
                                     return newObjects;
                                 }))}
                                 className="flex-1 mx-2"
                             />
-                            <span className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[0] as Rectangle).width}</span>
+                            <span
+                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[0] as Rectangle).width}</span>
                         </div>
                     </div>
 
@@ -476,16 +452,13 @@ const MonteCarloShadowSimulation: React.FC = () => {
                                 value={[(sceneObjects[0] as Rectangle).height]}
                                 onValueChange={(value) => (setSceneObjects((prev) => {
                                     const newObjects = [...prev];
-                                    const rect : Rectangle= {
-                                        ...(newObjects[0] as Rectangle),
-                                        height: value[0]
-                                    }
-                                    newObjects[0] = rect as SceneObject;
+                                    (newObjects[0] as Rectangle).height = value[0];
                                     return newObjects;
                                 }))}
                                 className="flex-1 mx-2"
                             />
-                            <span className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[0] as Rectangle).height}</span>
+                            <span
+                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[0] as Rectangle).height}</span>
                         </div>
                     </div>
 
@@ -501,16 +474,13 @@ const MonteCarloShadowSimulation: React.FC = () => {
                                 value={[(sceneObjects[1] as Rectangle).width]}
                                 onValueChange={(value) => (setSceneObjects((prev) => {
                                     const newObjects = [...prev];
-                                    const rect : Rectangle= {
-                                        ...(newObjects[1] as Rectangle),
-                                        width: value[0]
-                                    }
-                                    newObjects[1] = rect as SceneObject;
+                                    (newObjects[1] as Rectangle).width = value[0];
                                     return newObjects;
                                 }))}
                                 className="flex-1 mx-2"
                             />
-                            <span className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[1] as Rectangle).width}</span>
+                            <span
+                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[1] as Rectangle).width}</span>
                         </div>
                     </div>
 
@@ -525,16 +495,13 @@ const MonteCarloShadowSimulation: React.FC = () => {
                                 value={[(sceneObjects[1] as Rectangle).height]}
                                 onValueChange={(value) => (setSceneObjects((prev) => {
                                     const newObjects = [...prev];
-                                    const rect : Rectangle= {
-                                        ...(newObjects[1] as Rectangle),
-                                        height: value[0]
-                                    }
-                                    newObjects[1] = rect as SceneObject;
+                                    (newObjects[1] as Rectangle).height = value[0];
                                     return newObjects;
                                 }))}
                                 className="flex-1 mx-2"
                             />
-                            <span className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[1] as Rectangle).height}</span>
+                            <span
+                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[1] as Rectangle).height}</span>
                         </div>
                     </div>
                 </div>

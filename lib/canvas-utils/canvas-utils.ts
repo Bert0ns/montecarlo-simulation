@@ -1,39 +1,10 @@
 import React from "react";
-
-export enum CanvasObjectType {
-    RECTANGLE = "rectangle",
-    CIRCLE = "circle",
-}
-
-export interface Point {
-    x: number;
-    y: number;
-}
-
-export interface SceneObject {
-    position: Point;
-    type: CanvasObjectType;
-    id: string;
-}
-
-export interface Rectangle extends SceneObject {
-    type: CanvasObjectType.RECTANGLE;
-    width: number;
-    height: number;
-    fillColor?: string;
-}
+import { Point, Ray, Rectangle} from "./scene-objects";
 
 export interface CanvasRef {
     width: number,
     height: number,
     canvasRef: React.RefObject<HTMLCanvasElement | null>,
-}
-
-export interface Ray {
-    origin: Point;
-    direction: Point;
-    hitObstacle: boolean;
-    endpoint: Point | null;
 }
 
 export const convertToCanvasCoordinates = (point: Point, canvasObject:  CanvasRef): Point => {
