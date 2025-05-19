@@ -14,7 +14,7 @@ import React from "react";
 
 
 const ThemeSelector: React.FC<ThemeSelectorProps> = ({ className }) => {
-    const { theme, setTheme } = useTheme()
+    const { setTheme } = useTheme()
 
     return (
         <div className={cn("flex items-center", className)}>
