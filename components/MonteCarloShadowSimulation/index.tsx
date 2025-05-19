@@ -4,8 +4,9 @@ import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
 import {MouseDragInfo, SimulationState} from './index.types';
-import {CanvasRef, checkCanvasBorderIntersection, checkRectangleIntersection, convertToCanvasCoordinates, drawRay, isPointInRectangle,} from "@/lib/canvas-utils/canvas-utils";
-import {Ray, Rectangle, SceneObject, Point, CanvasObjectType } from '@/lib/canvas-utils/scene-objects';
+import {CanvasRef, checkCanvasBorderIntersection, checkRectangleIntersection, convertToCanvasCoordinates, drawRay, isPointInRectangle} from "@/lib/canvas-utils/canvas-utils";
+import {CanvasObjectType, Point, Ray, Rectangle, SceneObject} from '@/lib/canvas-utils/scene-objects';
+import RectangleEditor from "@/components/sceneObjectRectangleEditor";
 
 //TODO: check the functions that draws the shadows, it is not working as expected
 
@@ -129,7 +130,9 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
         // Per ogni raggio che colpisce l'ostacolo, tracciamo una "scia" di ombra
         for (const ray of rays) {
-            if (!ray.hitObstacle || !ray.endpoint) { continue; }
+            if (!ray.hitObstacle || !ray.endpoint) {
+                continue;
+            }
 
             let currentX = ray.endpoint.x;
             let currentY = ray.endpoint.y;
@@ -308,7 +311,6 @@ const MonteCarloShadowSimulation: React.FC = () => {
     return (
         <div className="flex flex-col gap-2 sm:gap-4 p-2 sm:p-4 max-w-full mx-auto">
             <h1 className="text-xl sm:text-2xl font-bold text-center">Monte Carlo Shadow Simulator</h1>
-
             <div
                 className="border border-gray-300 rounded-lg p-2 sm:pl-10 sm:pr-10 md:pl-14 md:pr-14 w-full flex justify-center items-center">
                 <canvas
@@ -400,91 +402,17 @@ const MonteCarloShadowSimulation: React.FC = () => {
                         Drag the light source and the obstacle to change their position.
                     </p>
 
-                    <h3 className="text-sm mt-1 font-semibold">Light Source</h3>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">width:</label>
-                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
-                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
-                            <Slider
-                                min={1}
-                                max={canvasObject.width * 0.7}
-                                step={1}
-                                value={[(sceneObjects[0] as Rectangle).width]}
-                                onValueChange={(value) => (setSceneObjects((prev) => {
-                                    const newObjects = [...prev];
-                                    (newObjects[0] as Rectangle).width = value[0];
-                                    return newObjects;
-                                }))}
-                                className="flex-1 mx-2"
-                            />
-                            <span
-                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[0] as Rectangle).width}</span>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">height:</label>
-                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
-                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
-                            <Slider
-                                min={1}
-                                max={canvasObject.height * 0.7}
-                                step={1}
-                                value={[(sceneObjects[0] as Rectangle).height]}
-                                onValueChange={(value) => (setSceneObjects((prev) => {
-                                    const newObjects = [...prev];
-                                    (newObjects[0] as Rectangle).height = value[0];
-                                    return newObjects;
-                                }))}
-                                className="flex-1 mx-2"
-                            />
-                            <span
-                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[0] as Rectangle).height}</span>
-                        </div>
-                    </div>
-
-                    <h3 className="text-sm mt-1 font-semibold">Obstacle</h3>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">width:</label>
-                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
-                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
-                            <Slider
-                                min={1}
-                                max={canvasObject.width * 0.7}
-                                step={1}
-                                value={[(sceneObjects[1] as Rectangle).width]}
-                                onValueChange={(value) => (setSceneObjects((prev) => {
-                                    const newObjects = [...prev];
-                                    (newObjects[1] as Rectangle).width = value[0];
-                                    return newObjects;
-                                }))}
-                                className="flex-1 mx-2"
-                            />
-                            <span
-                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[1] as Rectangle).width}</span>
-                        </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                        <label className="text-xs sm:text-sm mb-1 sm:mb-0 sm:flex-1">height:</label>
-                        <div className="flex items-center w-full sm:w-auto sm:flex-1">
-                            <span className="text-xs w-6 sm:w-12 text-right">1</span>
-                            <Slider
-                                min={1}
-                                max={canvasObject.height * 0.7}
-                                step={1}
-                                value={[(sceneObjects[1] as Rectangle).height]}
-                                onValueChange={(value) => (setSceneObjects((prev) => {
-                                    const newObjects = [...prev];
-                                    (newObjects[1] as Rectangle).height = value[0];
-                                    return newObjects;
-                                }))}
-                                className="flex-1 mx-2"
-                            />
-                            <span
-                                className="text-xs w-8 sm:w-12 text-right">{(sceneObjects[1] as Rectangle).height}</span>
-                        </div>
-                    </div>
+                    {sceneObjects.map((obj: SceneObject, index: number) => {
+                        if (obj.type !== CanvasObjectType.RECTANGLE) {
+                            throw new Error('Unsupported object type');
+                        }
+                        return (
+                            <RectangleEditor key={index} index={index} obj={obj as Rectangle}
+                                             sliderMaxHeight={canvasObject.height * 0.7}
+                                             sliderMaxWidth={canvasObject.width * 0.7} sceneObjects={sceneObjects}
+                                             setSceneObjects={setSceneObjects}/>
+                        );
+                    })}
                 </div>
             </div>
         </div>
