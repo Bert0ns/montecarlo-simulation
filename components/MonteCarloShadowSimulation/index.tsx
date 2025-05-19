@@ -4,14 +4,7 @@ import {Slider} from "@/components/ui/slider";
 import {Button} from "@/components/ui/button";
 import {Pause, Play, RefreshCw} from "lucide-react";
 import {MouseDragInfo, SimulationState} from './index.types';
-import {
-    CanvasRef,
-    checkCanvasBorderIntersection,
-    checkRectangleIntersection,
-    convertToCanvasCoordinates,
-    drawRay,
-    isPointInRectangle,
-} from "@/lib/canvas-utils/canvas-utils";
+import {CanvasRef, checkCanvasBorderIntersection, checkRectangleIntersection, convertToCanvasCoordinates, drawRay, isPointInRectangle,} from "@/lib/canvas-utils/canvas-utils";
 import {Ray, Rectangle, SceneObject, Point, CanvasObjectType } from '@/lib/canvas-utils/scene-objects';
 
 //TODO: check the functions that draws the shadows, it is not working as expected
@@ -138,15 +131,6 @@ const MonteCarloShadowSimulation: React.FC = () => {
         // Per ogni raggio che colpisce l'ostacolo, tracciamo una "scia" di ombra
         for (const ray of rays) {
             if (ray.hitObstacle && ray.endpoint) {
-                // Calcoliamo la direzione estesa del raggio
-                const dx = ray.endpoint.x - ray.origin.x;
-                const dy = ray.endpoint.y - ray.origin.y;
-                const length = Math.sqrt(dx * dx + dy * dy);
-
-                // Direzione Normalizzata
-                const nx = dx / length;
-                const ny = dy / length;
-
                 // Aggiungiamo punti lungo la direzione del raggio dopo l'ostacolo
                 let currentX = ray.endpoint.x;
                 let currentY = ray.endpoint.y;
@@ -161,8 +145,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
                         shadowGrid[index] += 1;
                     }
 
-                    currentX += nx * shadowCellSize / 2;
-                    currentY += ny * shadowCellSize / 2;
+                    currentX += ray.direction.x * shadowCellSize / 2;
+                    currentY += ray.direction.y * shadowCellSize / 2;
                 }
             }
         }
