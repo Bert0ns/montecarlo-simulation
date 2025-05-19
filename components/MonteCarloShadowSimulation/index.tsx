@@ -8,8 +8,6 @@ import {CanvasRef, checkCanvasBorderIntersection, checkRectangleIntersection, co
 import {CanvasObjectType, Point, Ray, Rectangle, SceneObject} from '@/lib/canvas-utils/scene-objects';
 import RectangleEditor from "@/components/sceneObjectRectangleEditor";
 
-//TODO: check the functions that draws the shadows, it is not working as expected
-
 
 const MonteCarloShadowSimulation: React.FC = () => {
     const maxRays = 10000;
@@ -82,42 +80,49 @@ const MonteCarloShadowSimulation: React.FC = () => {
                 y: Math.sin(angle)
             },
             hitObstacle: false,
-            endpoint: null
+            endpoints: []
         };
     }, [sceneObjects]);
 
     // Funzione per tracciare il percorso del raggio e verificare le collisioni
-    const findRayCollision = useCallback((ray: Ray): Ray => {
+    const findRayCollisions = useCallback((ray: Ray): Ray => {
         // Troviamo il punto di intersezione con l'ostacolo o con i bordi del canvas
         const result = {...ray};
+        result.hitObstacle = false;
 
-        // Parametri per l'equazione della linea del raggio
+        // Distanza minima dal punto di origine del raggio al punto di intersezione
         let t = Infinity;
 
-        // Verifica intersezione con l'ostacolo
+        const borderHit = checkCanvasBorderIntersection(ray, canvasObject);
+
         sceneObjects.filter(obj => obj.id.startsWith("obstacle")).forEach(obstacle => {
-            if (obstacle.type === CanvasObjectType.RECTANGLE) {
-                const obstacleHit = checkRectangleIntersection(ray, obstacle as Rectangle);
-                if (obstacleHit.hit && obstacleHit.t < t) {
-                    t = obstacleHit.t;
-                    result.hitObstacle = true;
-                }
-            } else {
+            if(obstacle.type !== CanvasObjectType.RECTANGLE) {
                 throw new Error('Unsupported object type');
             }
+
+            const obstacleHit = checkRectangleIntersection(ray, obstacle as Rectangle);
+            if (obstacleHit.hit && obstacleHit.distanceFromOriginToPointHit < t) {
+                t = obstacleHit.distanceFromOriginToPointHit;
+                result.hitObstacle = true;
+            }
+            if (borderHit.hit && borderHit.t < t) {
+                t = borderHit.t;
+            }
+
+            // Calcola il punto finale del raggio
+            const endpoint: Point = {
+                x: ray.origin.x + ray.direction.x * t,
+                y: ray.origin.y + ray.direction.y * t
+            };
+
+            // Aggiungi il punto finale alla lista degli endpoint se non è già presente
+            if(result.endpoints.length === 0 ) {
+                result.endpoints.push(endpoint);
+            }
+            else if(result.endpoints[result.endpoints.length - 1].x !== endpoint.x || result.endpoints[result.endpoints.length - 1].y !== endpoint.y) {
+                result.endpoints.push(endpoint);
+            }
         });
-
-        // Verifica intersezione con i bordi del canvas
-        const borderHit = checkCanvasBorderIntersection(ray, canvasObject);
-        if (borderHit.hit && borderHit.t < t) {
-            t = borderHit.t;
-        }
-
-        // Calcola il punto finale del raggio
-        result.endpoint = {
-            x: ray.origin.x + ray.direction.x * t,
-            y: ray.origin.y + ray.direction.y * t
-        };
 
         return result;
     }, [canvasObject, sceneObjects]);
@@ -126,28 +131,31 @@ const MonteCarloShadowSimulation: React.FC = () => {
     const drawShadow = useCallback((ctx: CanvasRenderingContext2D, rays: Ray[]) => {
         const gridWidth = Math.ceil(canvasObject.width / shadowCellSize);
         const gridHeight = Math.ceil(canvasObject.height / shadowCellSize);
-        const shadowGrid = Array(gridWidth * gridHeight).fill(0);
+        const shadowGrid = new Uint16Array(gridWidth * gridHeight);
 
         // Per ogni raggio che colpisce l'ostacolo, tracciamo una "scia" di ombra
         for (const ray of rays) {
-            if (!ray.hitObstacle || !ray.endpoint) {
+            if (!ray.hitObstacle || ray.endpoints.length === 0) {
                 continue;
             }
 
-            let currentX = ray.endpoint.x;
-            let currentY = ray.endpoint.y;
+            //ogni raggio potrebbe colpire più ostacoli
+            for (const endpoint of ray.endpoints) {
+                let currentX = endpoint.x;
+                let currentY = endpoint.y;
 
-            while (currentX >= 0 && currentX < canvasObject.width && currentY >= 0 && currentY < canvasObject.height) {
-                const gridX = Math.floor(currentX / shadowCellSize);
-                const gridY = Math.floor(currentY / shadowCellSize);
+                while (currentX >= 0 && currentX < canvasObject.width && currentY >= 0 && currentY < canvasObject.height) {
+                    const gridX = Math.floor(currentX / shadowCellSize);
+                    const gridY = Math.floor(currentY / shadowCellSize);
 
-                if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
-                    const index = gridY * gridWidth + gridX;
-                    shadowGrid[index] += 1;
+                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                        const index = gridY * gridWidth + gridX;
+                        shadowGrid[index] += 1;
+                    }
+
+                    currentX += ray.direction.x * shadowCellSize / 2;
+                    currentY += ray.direction.y * shadowCellSize / 2;
                 }
-
-                currentX += ray.direction.x * shadowCellSize / 2;
-                currentY += ray.direction.y * shadowCellSize / 2;
             }
         }
 
@@ -177,7 +185,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
         const rays: Ray[] = [];
         for (let i = 0; i < simulationState.numRays; i++) {
             const ray: Ray = generateRandomRay();
-            const hitResult: Ray = findRayCollision(ray);
+            const hitResult: Ray = findRayCollisions(ray);
             rays.push(hitResult);
 
             if (simulationState.showRays) {
@@ -187,7 +195,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
         // Calcoliamo e disegniamo l'ombra
         drawShadow(ctx, rays);
-    }, [initializeCanvasDrawings, drawShadow, simulationState.numRays, simulationState.showRays, generateRandomRay, findRayCollision]);
+    }, [initializeCanvasDrawings, drawShadow, simulationState.numRays, simulationState.showRays, generateRandomRay, findRayCollisions]);
 
     //Animation useEffect
     useEffect(() => {

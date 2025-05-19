@@ -2,7 +2,7 @@ export interface Ray {
     origin: Point;
     direction: Point;
     hitObstacle: boolean;
-    endpoint: Point | null;
+    endpoints: Point[];
 }
 
 export enum CanvasObjectType {

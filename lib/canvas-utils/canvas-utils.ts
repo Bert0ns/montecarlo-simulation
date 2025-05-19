@@ -46,8 +46,8 @@ export const isPointInRectangle = (point: Point, rect: Rectangle): boolean => {
 
 /*----------RAY utils------------*/
 
-const rayHitColor = 'rgba(255, 0, 0, 0.15)';
-const rayMissColor = 'rgba(255, 255, 0, 0.15)';
+export const rayHitColor = 'rgba(255, 0, 0, 0.15)';
+export const rayMissColor = 'rgba(255, 255, 0, 0.15)';
 
 // Funzione per verificare l'intersezione con i bordi del canvas
 export const checkCanvasBorderIntersection = (ray: Ray, canvasObject: CanvasRef) => {
@@ -95,67 +95,72 @@ export const checkCanvasBorderIntersection = (ray: Ray, canvasObject: CanvasRef)
 };
 
 // Funzione per verificare l'intersezione con un rettangolo
-export const checkRectangleIntersection = (ray: Ray, object: Rectangle) => {
+export const checkRectangleIntersection = (ray: Ray, object: Rectangle): {hit:boolean, distanceFromOriginToPointHit:number} => {
     const {origin, direction} = ray;
     const {position: rectPos, width: rectWidth, height: rectHeight} = object;
     let hit = false;
-    let tMin = Infinity;
+    let minDistanceFromOriginToPointHit: number = Infinity;
 
     // Verifica intersezione con i quattro lati del rettangolo
     // Lato sinistro
     if (direction.x > 0) {
+        //distanza dall'origine al punto colpito del lato sinistro
         const t = (rectPos.x - origin.x) / direction.x;
+
         if (t > 0) {
             const y = origin.y + t * direction.y;
-            if (y >= rectPos.y && y <= rectPos.y + rectHeight && t < tMin) {
-                tMin = t;
+            if (y >= rectPos.y && y <= rectPos.y + rectHeight && t < minDistanceFromOriginToPointHit) {
+                minDistanceFromOriginToPointHit = t;
                 hit = true;
             }
         }
     }
     // Lato destro
     if (direction.x < 0) {
+        //distanza dall'origine al punto colpito del lato destro
         const t = (rectPos.x + rectWidth - origin.x) / direction.x;
         if (t > 0) {
             const y = origin.y + t * direction.y;
-            if (y >= rectPos.y && y <= rectPos.y + rectHeight && t < tMin) {
-                tMin = t;
+            if (y >= rectPos.y && y <= rectPos.y + rectHeight && t < minDistanceFromOriginToPointHit) {
+                minDistanceFromOriginToPointHit = t;
                 hit = true;
             }
         }
     }
     // Lato superiore
     if (direction.y > 0) {
+        //distanza dall'origine al punto colpito del lato superiore
         const t = (rectPos.y - origin.y) / direction.y;
         if (t > 0) {
             const x = origin.x + t * direction.x;
-            if (x >= rectPos.x && x <= rectPos.x + rectWidth && t < tMin) {
-                tMin = t;
+            if (x >= rectPos.x && x <= rectPos.x + rectWidth && t < minDistanceFromOriginToPointHit) {
+                minDistanceFromOriginToPointHit = t;
                 hit = true;
             }
         }
     }
     // Lato inferiore
     if (direction.y < 0) {
+        //distanza dall'origine al punto colpito del lato inferiore
         const t = (rectPos.y + rectHeight - origin.y) / direction.y;
         if (t > 0) {
             const x = origin.x + t * direction.x;
-            if (x >= rectPos.x && x <= rectPos.x + rectWidth && t < tMin) {
-                tMin = t;
+            if (x >= rectPos.x && x <= rectPos.x + rectWidth && t < minDistanceFromOriginToPointHit) {
+                minDistanceFromOriginToPointHit = t;
                 hit = true;
             }
         }
     }
 
-    return {hit, t: tMin};
+    return {hit, distanceFromOriginToPointHit: minDistanceFromOriginToPointHit};
 }
 
-// Funzione per disegnare un raggio
+// Funzione per disegnare un raggio su canvas
 export const drawRay = (ctx: CanvasRenderingContext2D, ray: Ray) => {
-    if (!ray.endpoint) return;
+    if (ray.endpoints.length === 0) return;
     ctx.beginPath();
     ctx.moveTo(ray.origin.x, ray.origin.y);
-    ctx.lineTo(ray.endpoint.x, ray.endpoint.y);
+    ctx.lineTo(ray.endpoints[ray.endpoints.length - 1].x, ray.endpoints[ray.endpoints.length - 1].y);
     ctx.strokeStyle = ray.hitObstacle ? rayHitColor : rayMissColor;
     ctx.stroke();
 };
