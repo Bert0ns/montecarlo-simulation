@@ -123,31 +123,28 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
     // Funzione per disegnare l'ombra usando un approccio a densità
     const drawShadow = useCallback((ctx: CanvasRenderingContext2D, rays: Ray[]) => {
-        // Creiamo una matrice di celle per calcolare la densità dell'ombra
         const gridWidth = Math.ceil(canvasObject.width / shadowCellSize);
         const gridHeight = Math.ceil(canvasObject.height / shadowCellSize);
         const shadowGrid = Array(gridWidth * gridHeight).fill(0);
 
         // Per ogni raggio che colpisce l'ostacolo, tracciamo una "scia" di ombra
         for (const ray of rays) {
-            if (ray.hitObstacle && ray.endpoint) {
-                // Aggiungiamo punti lungo la direzione del raggio dopo l'ostacolo
-                let currentX = ray.endpoint.x;
-                let currentY = ray.endpoint.y;
+            if (!ray.hitObstacle || !ray.endpoint) { continue; }
 
-                // Tracciamo punti fino al bordo del canvas
-                while (currentX >= 0 && currentX < canvasObject.width && currentY >= 0 && currentY < canvasObject.height) {
-                    const gridX = Math.floor(currentX / shadowCellSize);
-                    const gridY = Math.floor(currentY / shadowCellSize);
+            let currentX = ray.endpoint.x;
+            let currentY = ray.endpoint.y;
 
-                    if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
-                        const index = gridY * gridWidth + gridX;
-                        shadowGrid[index] += 1;
-                    }
+            while (currentX >= 0 && currentX < canvasObject.width && currentY >= 0 && currentY < canvasObject.height) {
+                const gridX = Math.floor(currentX / shadowCellSize);
+                const gridY = Math.floor(currentY / shadowCellSize);
 
-                    currentX += ray.direction.x * shadowCellSize / 2;
-                    currentY += ray.direction.y * shadowCellSize / 2;
+                if (gridX >= 0 && gridX < gridWidth && gridY >= 0 && gridY < gridHeight) {
+                    const index = gridY * gridWidth + gridX;
+                    shadowGrid[index] += 1;
                 }
+
+                currentX += ray.direction.x * shadowCellSize / 2;
+                currentY += ray.direction.y * shadowCellSize / 2;
             }
         }
 
