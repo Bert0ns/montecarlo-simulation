@@ -7,9 +7,12 @@ import {MouseDragInfo, SimulationState} from './index.types';
 import {CanvasRef, checkCanvasBorderIntersection, checkRectangleIntersection, convertToCanvasCoordinates, drawRay, isPointInRectangle} from "@/lib/canvas-utils/canvas-utils";
 import {CanvasObjectType, Point, Ray, Rectangle, SceneObject} from '@/lib/canvas-utils/scene-objects';
 import RectangleEditor from "@/components/sceneObjectRectangleEditor";
-
+import {useTheme} from "@/components/ThemeProvider";
 
 const MonteCarloShadowSimulation: React.FC = () => {
+    const {theme} = useTheme();
+    const isDarkTheme = theme === 'dark';
+
     const maxRays = 10000;
     const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
     const canvasObject: CanvasRef = useMemo<CanvasRef>(() => ({
@@ -25,9 +28,9 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const [simulationState, setSimulationState] = React.useState<SimulationState>(initialSimulationState);
 
-    const initialLightSourceState: Rectangle = new Rectangle({x: 100, y: 100}, "lightSource", 30, 30, "#c051f4");
-    const initialObstacle0State: Rectangle = new Rectangle({x: 400, y: 100}, "obstacle", 70, 120, "#4a4a4a");
-    const initialObstacle1State: Rectangle = new Rectangle({x: 500, y: 200}, "obstacle", 30, 100, "#4a4a4a");
+    const initialLightSourceState: Rectangle = new Rectangle({x: 100, y: 100}, "lightSource", 30, 30, isDarkTheme ? "#d46ef7" : "#c051f4");
+    const initialObstacle0State: Rectangle = new Rectangle({x: 400, y: 100}, "obstacle", 70, 120, isDarkTheme ? "#6b7280" : "#4a4a4a");
+    const initialObstacle1State: Rectangle = new Rectangle({x: 500, y: 200}, "obstacle", 30, 100, isDarkTheme ? "#6b7280" : "#4a4a4a");
     const [sceneObjects, setSceneObjects] = useState<SceneObject[]>([initialLightSourceState, initialObstacle0State, initialObstacle1State]);
 
     const initialMouseDragInfoState: MouseDragInfo = {
@@ -226,6 +229,33 @@ const MonteCarloShadowSimulation: React.FC = () => {
         initializeCanvasDrawings(ctx);
     }, [initializeCanvasDrawings]);
 
+    /*
+    // Ridisegna quando cambia il tema
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Aggiorna i colori degli oggetti di scena
+        setSceneObjects(prevObjects =>
+            prevObjects.map(obj => {
+                if (obj.type === CanvasObjectType.RECTANGLE) {
+                    const rect = obj as Rectangle;
+                    if (rect.name === "lightSource") {
+                        return {...rect, fillColor: isDarkTheme ? "#d46ef7" : "#c051f4"};
+                    } else if (rect.name === "obstacle") {
+                        return {...rect, fillColor: isDarkTheme ? "#6b7280" : "#4a4a4a"};
+                    }
+                }
+                return obj;
+            })
+        );
+
+        initializeCanvasDrawings(ctx);
+    }, [isDarkTheme, initializeCanvasDrawings]);
+    */
+
     const updateIfClickPointInObject = (point: Point) => {
         sceneObjects.forEach((obj) => {
             if (obj.type !== CanvasObjectType.RECTANGLE) {
@@ -306,7 +336,11 @@ const MonteCarloShadowSimulation: React.FC = () => {
     }
     const resetSimulation = () => {
         setSimulationState(initialSimulationState);
-        setSceneObjects([new Rectangle(initialLightSourceState), new Rectangle(initialObstacle0State), new Rectangle(initialObstacle1State)]);
+        setSceneObjects([
+            new Rectangle({...initialLightSourceState, fillColor: isDarkTheme ? "#d46ef7" : "#c051f4"} as Rectangle),
+            new Rectangle({...initialObstacle0State, fillColor: isDarkTheme ? "#6b7280" : "#4a4a4a"} as Rectangle),
+            new Rectangle({...initialObstacle1State, fillColor: isDarkTheme ? "#6b7280" : "#4a4a4a"} as Rectangle)
+        ]);
         setShadowCellSize(4);
     }
     const toggleSimulation = () => {
@@ -318,14 +352,14 @@ const MonteCarloShadowSimulation: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-2 sm:gap-4 p-2 sm:p-4 max-w-full mx-auto">
-            <h1 className="text-xl sm:text-2xl font-bold text-center">Monte Carlo Shadow Simulator</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-center dark:text-gray-100">Monte Carlo Shadow Simulator</h1>
             <div
-                className="border border-gray-300 rounded-lg p-2 sm:pl-10 sm:pr-10 md:pl-14 md:pr-14 w-full flex justify-center items-center">
+                className="border border-gray-300 dark:border-gray-700 rounded-lg p-2 sm:pl-10 sm:pr-10 md:pl-14 md:pr-14 w-full flex justify-center items-center dark:bg-gray-800">
                 <canvas
                     ref={canvasRef}
                     width={canvasObject.width}
                     height={canvasObject.height}
-                    className="border border-gray-400 rounded mx-auto bg-gray-100 max-w-full max-h-full touch-none"
+                    className="border border-gray-400 dark:border-gray-600 rounded mx-auto bg-gray-100 dark:bg-gray-900 max-w-full max-h-full touch-none"
                     onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
@@ -338,8 +372,8 @@ const MonteCarloShadowSimulation: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 rounded-lg">
-                    <h2 className="text-base sm:text-lg font-semibold">Simulation Controls</h2>
+                <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-900/20">
+                    <h2 className="text-base sm:text-lg font-semibold dark:text-gray-100">Simulation Controls</h2>
 
                     <div className="flex gap-1 sm:gap-3 mt-2 sm:mt-4">
                         <Button variant="outline" className="flex-1 text-xs sm:text-sm h-8 sm:h-10"
@@ -360,9 +394,9 @@ const MonteCarloShadowSimulation: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2">
-                        <label className="text-sm mb-1 sm:mb-0 sm:flex-1">Number of Rays:</label>
+                        <label className="text-sm mb-1 sm:mb-0 sm:flex-1 dark:text-gray-300">Number of Rays:</label>
                         <div className="flex items-center w-full sm:w-auto sm:flex-1">
-                            <span className="text-xs sm:text-sm w-6 sm:w-12 text-right">1</span>
+                            <span className="text-xs sm:text-sm w-6 sm:w-12 text-right dark:text-gray-300">1</span>
                             <Slider
                                 min={1}
                                 max={maxRays}
@@ -371,12 +405,12 @@ const MonteCarloShadowSimulation: React.FC = () => {
                                 onValueChange={handleRaysChange}
                                 className="flex-1 mx-2"
                             />
-                            <span className="text-xs sm:text-sm w-8 sm:w-12 text-right">{simulationState.numRays}</span>
+                            <span className="text-xs sm:text-sm w-8 sm:w-12 text-right dark:text-gray-300">{simulationState.numRays}</span>
                         </div>
                     </div>
 
                     <div className="flex items-center mt-2">
-                        <label className="flex items-center text-sm">
+                        <label className="flex items-center text-sm dark:text-gray-300">
                             <input
                                 type="checkbox"
                                 checked={simulationState.showRays}
@@ -388,9 +422,9 @@ const MonteCarloShadowSimulation: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-2">
-                        <label className="text-sm mb-1 sm:mb-0 sm:flex-1">Shadow Cell Size:</label>
+                        <label className="text-sm mb-1 sm:mb-0 sm:flex-1 dark:text-gray-300">Shadow Cell Size:</label>
                         <div className="flex items-center w-full sm:w-auto sm:flex-1">
-                            <span className="text-xs sm:text-sm w-6 sm:w-12 text-right">1</span>
+                            <span className="text-xs sm:text-sm w-6 sm:w-12 text-right dark:text-gray-300">1</span>
                             <Slider
                                 min={1}
                                 max={20}
@@ -399,14 +433,14 @@ const MonteCarloShadowSimulation: React.FC = () => {
                                 onValueChange={(value) => setShadowCellSize(value[0])}
                                 className="flex-1 mx-2"
                             />
-                            <span className="text-xs sm:text-sm w-8 sm:w-12 text-right">{shadowCellSize}</span>
+                            <span className="text-xs sm:text-sm w-8 sm:w-12 text-right dark:text-gray-300">{shadowCellSize}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 rounded-lg">
-                    <h2 className="text-base sm:text-lg font-semibold">Objects in the scene</h2>
-                    <p className="text-sm font-light text-gray-600">
+                <div className="flex flex-col gap-2 p-3 sm:p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 shadow-sm dark:shadow-gray-900/20">
+                    <h2 className="text-base sm:text-lg font-semibold dark:text-gray-100">Objects in the scene</h2>
+                    <p className="text-sm font-light text-gray-600 dark:text-gray-400">
                         Drag the light source and the obstacle to change their position.
                     </p>
 

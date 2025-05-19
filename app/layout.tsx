@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type {Metadata} from "next";
 import "./globals.css";
 import 'katex/dist/katex.css' // `rehype-katex` does not import the CSS for you
 import React from "react";
@@ -8,6 +8,7 @@ import {SiteHeader} from "@/components/SiteHeader";
 import {Merriweather} from "next/font/google";
 import {NextFontWithVariable} from "next/dist/compiled/@next/font";
 import {websiteConfigs} from "@/website.configs";
+import ThemeProvider from "@/components/ThemeProvider";
 
 const merriweather: NextFontWithVariable = Merriweather({
     subsets: ['latin'],
@@ -17,24 +18,20 @@ const merriweather: NextFontWithVariable = Merriweather({
 });
 
 export const metadata: Metadata = {
-  title: websiteConfigs.title,
-  description: websiteConfigs.description,
+    title: websiteConfigs.title,
+    description: websiteConfigs.description,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body
-        className={`${merriweather.variable} antialiased font-serif`}
-      >
-      <SiteHeader />
-        {children}
-      <SiteFooter />
-      </body>
-    </html>
-  );
+export default function RootLayout({children,}: Readonly<{ children: React.ReactNode; }>) {
+    return (
+        <html lang="en">
+        <body className={`${merriweather.variable} antialiased font-serif`}>
+            <ThemeProvider>
+                <SiteHeader/>
+                {children}
+                <SiteFooter/>
+            </ThemeProvider>
+        </body>
+        </html>
+    );
 }

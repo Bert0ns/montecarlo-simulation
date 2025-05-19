@@ -4,6 +4,7 @@ import React, {useCallback, useEffect, useMemo, useRef, useState} from "react"
 import {Button} from "@/components/ui/button"
 import {Slider} from "@/components/ui/slider"
 import {Pause, Play, RefreshCw} from "lucide-react"
+import {useTheme} from "@/components/ThemeProvider"
 
 interface Circle {
     x: number
@@ -20,6 +21,9 @@ interface SimulationState {
 }
 
 const MonteCarloPiSimulation: React.FC = ({}) => {
+    const {theme} = useTheme();
+    const isDarkTheme = theme === 'dark';
+
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const bufferCanvasRef = useRef<HTMLCanvasElement>(null);
     const animationRef = useRef<number | null>(null);
@@ -56,16 +60,16 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         ctx.clearRect(0, 0, canvasSize, canvasSize)
 
         // Draw square
-        ctx.strokeStyle = "#e5e7eb"
+        ctx.strokeStyle = isDarkTheme ? "#4b5563" : "#e5e7eb" // Darker in dark mode
         ctx.lineWidth = 2
         ctx.strokeRect(0, 0, canvasSize, canvasSize)
 
         // Draw circle
         ctx.beginPath()
         ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI)
-        ctx.strokeStyle = "#d1d5db"
+        ctx.strokeStyle = isDarkTheme ? "#6b7280" : "#d1d5db" // Darker in dark mode
         ctx.stroke()
-    }, [circle.radius, circle.x, circle.y]);
+    }, [circle.radius, circle.x, circle.y, isDarkTheme]);
 
     const addPointsBatch = useCallback((batchSize: number) => {
         const bufferCanvas = bufferCanvasRef.current
@@ -92,7 +96,9 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
             // Draw point directly to the buffer
             ctx.beginPath();
             ctx.arc(canvasX, canvasY, pointSize, 0, 2 * Math.PI);
-            ctx.fillStyle = isInside ? "#3b82f6" : "#ef4444";
+            ctx.fillStyle = isInside
+                ? (isDarkTheme ? "#60a5fa" : "#3b82f6") // Brighter blue in dark mode
+                : (isDarkTheme ? "#f87171" : "#ef4444"); // Brighter red in dark mode
             ctx.fill();
         }
 
@@ -110,7 +116,7 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         })
 
         updateMainCanvas()
-    }, []);
+    }, [isDarkTheme]);
 
     const resetSimulation = () => {
         setSimulationState({
@@ -137,7 +143,6 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
 
     // Copy buffer canvas to the main canvas
     const updateMainCanvas = () => {
-
         const canvas = canvasRef.current;
         const bufferCanvas = bufferCanvasRef.current;
         if (!canvas || !bufferCanvas) return;
@@ -209,9 +214,15 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
         }
     }, [canvasSize, drawBackgroundToBuffer])
 
+    // Redraw when theme changes
+    useEffect(() => {
+        drawBackgroundToBuffer();
+        updateMainCanvas();
+    }, [isDarkTheme, drawBackgroundToBuffer]);
+
     return (
-        <div className="bg-gray-50 p-4 sm:p-6 rounded-lg shadow-sm w-auto">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6">Interactive Simulation</h2>
+        <div className="bg-gray-50 dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm dark:shadow-gray-900/20 w-auto">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-4 sm:mb-6 dark:text-gray-100">Interactive Simulation</h2>
 
             <div className="grid lg:grid-cols-2 gap-4 sm:gap-8">
                 <div className="w-full h-auto flex justify-center items-center">
@@ -219,33 +230,33 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                         ref={canvasRef}
                         width={canvasSize}
                         height={canvasSize}
-                        className="bg-white border border-gray-200 max-w-full max-h-full"
+                        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 max-w-full max-h-full"
                     />
                 </div>
 
                 <div className="flex flex-col justify-between">
                     <div>
                         <div className="mb-4 sm:mb-8">
-                            <h3 className="text-base sm:text-lg font-medium mb-2">Results</h3>
+                            <h3 className="text-base sm:text-lg font-medium mb-2 dark:text-gray-100">Results</h3>
                             <div className="grid grid-cols-2 gap-2 sm:gap-4">
-                                <div className="bg-white p-2 sm:p-4 rounded border border-gray-200">
-                                    <p className="text-xs sm:text-sm text-gray-500">Total Points</p>
-                                    <p className="text-lg sm:text-2xl font-mono">{simulationState.totalPoints}</p>
+                                <div className="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Points</p>
+                                    <p className="text-lg sm:text-2xl font-mono dark:text-gray-100">{simulationState.totalPoints}</p>
                                 </div>
-                                <div className="bg-white p-2 sm:p-4 rounded border border-gray-200">
-                                    <p className="text-xs sm:text-sm text-gray-500">Points Inside</p>
-                                    <p className="text-lg sm:text-2xl font-mono">{simulationState.pointsInside}</p>
+                                <div className="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded border border-gray-200 dark:border-gray-700">
+                                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Points Inside</p>
+                                    <p className="text-lg sm:text-2xl font-mono dark:text-gray-100">{simulationState.pointsInside}</p>
                                 </div>
                             </div>
                         </div>
 
                         <div className="mb-4 sm:mb-8">
-                            <h3 className="text-base sm:text-lg font-medium mb-2">π Approximation</h3>
-                            <div className="bg-white p-2 sm:p-4 rounded border border-gray-200">
-                                <p className="text-2xl sm:text-3xl font-mono text-center">
+                            <h3 className="text-base sm:text-lg font-medium mb-2 dark:text-gray-100">π Approximation</h3>
+                            <div className="bg-white dark:bg-gray-800 p-2 sm:p-4 rounded border border-gray-200 dark:border-gray-700">
+                                <p className="text-2xl sm:text-3xl font-mono text-center dark:text-gray-100">
                                     {simulationState.piApproximation === 0 ? "—" : simulationState.piApproximation.toFixed(6)}
                                 </p>
-                                <div className="mt-2 text-center text-xs sm:text-sm text-gray-500">
+                                <div className="mt-2 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                     <p>Actual π: 3.141592653589793...</p>
                                     {simulationState.totalPoints > 0 &&
                                         <p className="mt-1">Error: {piApproximationError.toFixed(6)}</p>}
@@ -254,9 +265,9 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                         </div>
 
                         <div className="mb-4 sm:mb-6">
-                            <h3 className="text-base sm:text-lg font-medium mb-2">Simulation Speed</h3>
+                            <h3 className="text-base sm:text-lg font-medium mb-2 dark:text-gray-100">Simulation Speed</h3>
                             <div className="flex items-center gap-2 sm:gap-4">
-                                <span className="text-xs sm:text-sm">Slow</span>
+                                <span className="text-xs sm:text-sm dark:text-gray-400">Slow</span>
                                 <Slider
                                     value={[simulationState.speed]}
                                     min={1}
@@ -265,7 +276,7 @@ const MonteCarloPiSimulation: React.FC = ({}) => {
                                     onValueChange={(value) => setSimulationState({...simulationState, speed: value[0]})}
                                     className="flex-1"
                                 />
-                                <span className="text-xs sm:text-sm">Fast</span>
+                                <span className="text-xs sm:text-sm dark:text-gray-400">Fast</span>
                             </div>
                         </div>
                     </div>
