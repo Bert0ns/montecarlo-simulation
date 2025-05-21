@@ -58,15 +58,17 @@ const MobileNav: React.FC<SiteHeaderProps> = ({routes}) => {
             </SheetTrigger>
             <SheetContent side="right" className="w-[85%] sm:w-[350px] pr-0 dark:bg-gray-800 dark:border-gray-700">
                 <SheetHeader className="pb-4 border-b dark:border-gray-700">
-                    <SheetTitle className="flex items-center gap-2 dark:text-gray-100">
-                        <Image
-                            src={websiteConfigs.logo_img}
-                            alt="Logo"
-                            width={40}
-                            height={40}
-                            className="h-8 w-auto"
-                        />
-                        {websiteConfigs.title}
+                    <SheetTitle className="dark:text-gray-100">
+                        <Link href="/" className="flex items-center gap-2">
+                            <Image
+                                src={websiteConfigs.logo_img}
+                                alt="Logo"
+                                width={40}
+                                height={40}
+                                className="h-8 w-auto"
+                            />
+                            {websiteConfigs.title}
+                        </Link>
                     </SheetTitle>
                 </SheetHeader>
 

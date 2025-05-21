@@ -167,8 +167,7 @@ const MonteCarloShadowSimulation: React.FC = () => {
             for (let x = 0; x < gridWidth; x++) {
                 const index = y * gridWidth + x;
                 if (shadowGrid[index] > 0) {
-                    // Calcola l'intensità dell'ombra in base al numero di raggi
-                    const alpha = Math.min(0.7, shadowGrid[index] / (simulationState.numRays / 50));
+                    const alpha = Math.min(0.7, shadowGrid[index] / (simulationState.numRays / 100));
                     ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
                     ctx.fillRect(x * shadowCellSize, y * shadowCellSize, shadowCellSize, shadowCellSize);
                 }
