@@ -20,10 +20,12 @@ const ShadowSimulationCard = () => {
                 <CardDescription className="text-gray-600">
                     Explore how Monte Carlo methods can create realistic shadow effects with accurate
                     penumbra regions.
+                    <br/>
+                    Try now: 
                 </CardDescription>
             </CardHeader>
             <CardFooter>
-                <Button asChild variant="default" className="bg-purple-600 hover:bg-purple-700">
+                <Button variant="default" className="bg-purple-600 hover:bg-purple-700">
                     <Link href={websiteConfigs.menuItems[1].link}>
                         Explore Simulation
                     </Link>
